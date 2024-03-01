@@ -1,0 +1,6 @@
+../Core/Src/Disk/SD_Card.c:166:13:Send8ClockCycles	16	static
+../Core/Src/Disk/SD_Card.c:177:13:Delayms	24	static
+../Core/Src/Disk/SD_Card.c:189:13:ReadCRC	16	static
+../Core/Src/Disk/SD_Card.c:200:12:SD_CardInit	64	static
+../Core/Src/Disk/SD_Card.c:341:14:SD_SendCommand	40	static
+../Core/Src/Disk/SD_Card.c:446:12:SectorRead	32	static

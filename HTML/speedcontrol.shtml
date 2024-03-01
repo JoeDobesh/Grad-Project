@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!-- This is my Grad Project Locomotive Speed Control Page -->
+<html lang="en-US">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="description" content="Locomotive Speed Control" />
+		<meta name="author" content="Joe Dobesh" />
+		<meta http-equiv="refresh" content="1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Speed Control</title>
+		<style>
+			body {background-color:green;}
+			h1 {text-align:center;}
+			table, th, td {
+				border: 1px solid black;
+				border-style: inset;
+			}
+			th, td {
+				background-color: white;
+			}
+			table.center {
+				margin-left: auto; 
+				margin-right: auto;
+			}
+		</style>
+		<script>
+			function DecreaseSpeed()
+			{
+				document.getElementById("retVal").value = "-"
+			}
+			function IncreaseSpeed()
+			{
+				document.getElementById("retVal").value = "+"
+			}
+		</script>
+	</head>
+	<body>
+		<h1>Locomotive Speed Control</h1>
+		<hr />
+		<p style="text-align:center;">
+			<button onclick="document.location='index.html'">Return To Main Page</button>
+			<button onclick="document.location='LoopControl.html'">Loop Control Page</button>
+			<button onclick="document.location='CrossingMonitor.html'">Crossing Monitor Page</button>
+		</p>
+		<p style="text-align:center;">This page controls the speed of the locomotive</p>
+		<hr />
+		<form action="speed.cgi">
+			<table class="center">
+				<tr style="text-align:center;">
+					<td><button type="submit" value='submit' onclick=DecreaseSpeed()>&#9660</button></td>
+					<td style="width:50px"><!--#speed--></td>
+					<td><button type="submit" value='submit' onclick=IncreaseSpeed()>&#9650</button></td>
+				</tr>
+			</table>
+			<td><input type="hidden" id="retVal" name="retVal" style="width:50px"></td>
+		</form>
+		<p style="text-align:center;">
+			<a href="index.html", style="color:red;">Exit</a>
+		</p>
+	</body>
+</html>

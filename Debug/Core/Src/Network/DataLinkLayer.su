@@ -1,0 +1,8 @@
+../Core/Src/Network/DataLinkLayer.c:64:13:AssembleFrame	48	static
+../Core/Src/Network/DataLinkLayer.c:97:6:DataLinkInit	16	static
+../Core/Src/Network/DataLinkLayer.c:130:6:GetMAC_Address	24	static
+../Core/Src/Network/DataLinkLayer.c:141:6:DataLinkReceive	4	static
+../Core/Src/Network/DataLinkLayer.c:149:6:DataLinkSend	56	static
+../Core/Src/Network/DataLinkLayer.c:216:6:DataLinkInterrupt	4	static
+../Core/Src/Network/DataLinkLayer.c:221:6:SendTestTask	32	static
+../Core/Src/Network/DataLinkLayer.c:228:6:ReceiveTestTask	16	static

@@ -1,0 +1,7 @@
+../Core/Src/Network/Application.c:12:10:CreateSocket	24	static
+../Core/Src/Network/Application.c:20:10:BindSocket	24	static
+../Core/Src/Network/Application.c:28:10:SocketListen	16	static
+../Core/Src/Network/Application.c:36:10:AcceptSocket	24	static
+../Core/Src/Network/Application.c:44:10:ReadSocket	24	static
+../Core/Src/Network/Application.c:52:10:WriteSocket	24	static
+../Core/Src/Network/Application.c:60:10:CloseSocket	16	static

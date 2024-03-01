@@ -1,0 +1,14 @@
+../Core/Src/Network/Server.c:117:9:GetClientMethod	24	static
+../Core/Src/Network/Server.c:169:6:GetMIMEType	256	static
+../Core/Src/Network/Server.c:280:6:GetFileName	32	static
+../Core/Src/Network/Server.c:302:6:AssembleResponse	40	static
+../Core/Src/Network/Server.c:321:13:tcp_server_send	32	static
+../Core/Src/Network/Server.c:353:13:tcp_server_connection_close	16	static
+../Core/Src/Network/Server.c:366:13:tcp_server_handle	144	static
+../Core/Src/Network/Server.c:387:14:tcp_server_sent	32	static
+../Core/Src/Network/Server.c:408:14:tcp_server_recv	40	static
+../Core/Src/Network/Server.c:482:14:tcp_server_poll	24	static
+../Core/Src/Network/Server.c:512:13:tcp_server_error	24	static
+../Core/Src/Network/Server.c:524:14:tcp_server_accept	32	static
+../Core/Src/Network/Server.c:557:6:ServerInit	16	static
+../Core/Src/Network/Server.c:586:6:ServerTask	30144	static

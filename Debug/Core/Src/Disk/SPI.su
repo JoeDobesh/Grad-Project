@@ -1,0 +1,6 @@
+../Core/Src/Disk/SPI.c:15:6:SPI_Init	8	static
+../Core/Src/Disk/SPI.c:26:6:SPI_CS_High	8	static
+../Core/Src/Disk/SPI.c:34:6:SPI_CS_Low	8	static
+../Core/Src/Disk/SPI.c:42:6:SPI_WriteRead	32	static
+../Core/Src/Disk/SPI.c:74:6:SPI_Read	24	static
+../Core/Src/Disk/SPI.c:104:6:SPI_Write	24	static

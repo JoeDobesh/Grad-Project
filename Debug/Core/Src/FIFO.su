@@ -1,0 +1,7 @@
+../Core/Src/FIFO.c:26:6:FIFO_Init	16	static
+../Core/Src/FIFO.c:41:6:ResetFIFOs	16	static
+../Core/Src/FIFO.c:59:6:RegisterFIFOInput	24	static
+../Core/Src/FIFO.c:83:6:PutFIFOData	32	static
+../Core/Src/FIFO.c:109:6:GetFIFOData	24	static
+../Core/Src/FIFO.c:139:6:ReleaseFIFO	24	static
+../Core/Src/FIFO.c:163:6:FIFO_Test	8	static

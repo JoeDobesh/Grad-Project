@@ -1,0 +1,8 @@
+../Core/Src/KernalThread.c:92:13:KernalThreadInit	16	static
+../Core/Src/KernalThread.c:105:13:SaveRegisters	56	static,ignoring_inline_asm
+../Core/Src/KernalThread.c:143:13:RestoreRegisters	48	static
+../Core/Src/KernalThread.c:180:13:popStack	24	static
+../Core/Src/KernalThread.c:198:6:KernalTask	16	static
+../Core/Src/KernalThread.c:253:6:KernalRegister	24	static
+../Core/Src/KernalThread.c:271:6:KernalRelease	24	static
+../Core/Src/KernalThread.c:293:6:ContextSwitchInterrupt	88	static,ignoring_inline_asm

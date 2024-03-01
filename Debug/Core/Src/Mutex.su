@@ -1,0 +1,4 @@
+../Core/Src/Mutex.c:21:6:MutexInit	16	static
+../Core/Src/Mutex.c:36:6:MutexWait	16	static
+../Core/Src/Mutex.c:45:6:MutexWaitTime	24	static
+../Core/Src/Mutex.c:64:6:MutexRelease	16	static

@@ -1,0 +1,5 @@
+../Core/Src/Network/ARP.c:57:6:ARP_Init	16	static
+../Core/Src/Network/ARP.c:81:6:GetARP_Cache	24	static
+../Core/Src/Network/ARP.c:116:6:SaveCache	24	static
+../Core/Src/Network/ARP.c:161:6:SendAddressResolution	40	static
+../Core/Src/Network/ARP.c:209:6:ReceiveAddressResolution	24	static
