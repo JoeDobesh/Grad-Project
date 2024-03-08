@@ -9,7 +9,7 @@
 #include "Globals.h"
 #include "main.h"
 
-#define FLASH_TIME 1000
+#define FLASH_TIME_MS 1000
 
 static STATES heartbeatTaskState = stateZero;
 static uint32_t timeout = 0;
@@ -23,14 +23,14 @@ void HeartbeatTask(void)
 	{
 	case stateZero:
 		HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 1);
-		timeout = HAL_GetTick() + FLASH_TIME;
+		timeout = HAL_GetTick() + FLASH_TIME_MS;
 		heartbeatTaskState++;
 		break;
 	case stateOne:
 		if ( timeout <  HAL_GetTick())
 		{
 			HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 0);
-			timeout = HAL_GetTick() + FLASH_TIME;
+			timeout = HAL_GetTick() + FLASH_TIME_MS;
 			heartbeatTaskState++;
 		}
 		break;
@@ -38,7 +38,7 @@ void HeartbeatTask(void)
 		if ( timeout <  HAL_GetTick())
 		{
 			HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 1);
-			timeout = HAL_GetTick() + FLASH_TIME;
+			timeout = HAL_GetTick() + FLASH_TIME_MS;
 			heartbeatTaskState--;
 		}
 		break;

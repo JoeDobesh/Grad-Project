@@ -18,6 +18,8 @@ void KernalTask(void);
 BOOL KernalRegister(void * taskPtr);
 BOOL KernalRelease(void * taskPtr);
 void ContextSwitchInterrupt(void);
+BOOL TimeToContextSwitch(void);
+void vTaskSwitchContext(void);
 
 #ifdef __cplusplus
 }

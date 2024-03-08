@@ -80,6 +80,21 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/*
+void HAL_SYSTICK_Callback(void)
+{
+	//Disable interrupts
+	__disable_irq();
+	if(TimeToContextSwitch() == TRUE)
+	{
+		//trigger PendSV
+		HAL_NVIC_SetPendingIRQ(PendSV_IRQn);
+	}
+	//Enable interrupts
+	__enable_irq();
+}
+*/
+
 int __io_putchar(int ch)
 {
 	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);

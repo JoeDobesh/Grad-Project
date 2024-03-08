@@ -23,7 +23,6 @@
 "./Core/Src/Disk/SD_Card.o"
 "./Core/Src/Disk/SPI.o"
 "./Core/Src/Network/Index.o"
-"./Core/Src/Network/Server.o"
 "./Core/Src/Network/http_cgi.o"
 "./Core/Src/Network/http_ssi.o"
 "./Core/Src/Network/loopcontrol.o"

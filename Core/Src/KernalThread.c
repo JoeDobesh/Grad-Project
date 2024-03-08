@@ -31,6 +31,7 @@
 
 #define MAX_NUM_OF_USER_TASKS 10
 #define TASK_NAME_SIZE 32
+#define SYSTICK_VALUE 10
 
 extern struct netif gnetif;
 
@@ -82,10 +83,12 @@ typedef struct _PCB_
 	USER_THREAD    process;
 }PCB;
 
-static PCB pcbArray[MAX_NUM_OF_USER_TASKS];
+uint32_t * pxCurrentTCB;
+//static PCB pcbArray[MAX_NUM_OF_USER_TASKS];
 static USER_THREAD userThreadArray[MAX_NUM_OF_USER_TASKS];
 static uint8_t pcbIndex = 0;
 static uint8_t pcbMax = 0;
+static uint32_t contextCounter = 0;
 //*****************************************************************************
 // KernalThreadInit
 //*****************************************************************************
@@ -96,12 +99,34 @@ static void KernalThreadInit(void)
 		userThreadArray[i].used = FALSE;
 		userThreadArray[i].userThreadPtr = NULL;
 	}
+	contextCounter = 0;
 	printf("KernalThreadInit - Passed\n");
+}
+
+//*****************************************************************************
+// TimeToContextSwitch
+//*****************************************************************************
+BOOL TimeToContextSwitch(void)
+{
+	contextCounter++;
+	if(contextCounter >= SYSTICK_VALUE)
+	{
+		contextCounter = 0;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void vTaskSwitchContext(void)
+{
+
 }
 
 //*****************************************************************************
 // SaveRegisters
 //*****************************************************************************
+/*
 static void SaveRegisters(CORE_REGS_PTR regs)
 {
 	register uint32_t r0 asm("r0"); //Scratch Register
@@ -136,10 +161,11 @@ static void SaveRegisters(CORE_REGS_PTR regs)
 	regs->lr = lr;
 	asm("mov %0, pc" : "=r"(regs->pc) : : ); //Program Counter (r15)
 }
-
+*/
 //*****************************************************************************
 // RestoreRegisters
 //*****************************************************************************
+/*
 static void RestoreRegisters(CORE_REGS_PTR regs)
 {
 	register uint32_t r0 asm("r0"); //Scratch Register
@@ -191,6 +217,7 @@ static void popStack(CORE_REGS_PTR regs, uint32_t * stackPtr)
 	regs->psr = *(++localPtr); //Processor State Register
 	//FYI - r13 = Stack Pointer
 }
+*/
 
 //*****************************************************************************
 // KernalTask
@@ -290,6 +317,7 @@ BOOL KernalRelease(void * taskPtr)
 //*****************************************************************************
 // ContextSwitchInterrupt
 //*****************************************************************************
+/*
 void ContextSwitchInterrupt(void)
 {
 	CORE_REGISTERS regs;
@@ -316,6 +344,7 @@ void ContextSwitchInterrupt(void)
 	//enable interrupts
 	//__enable_irq();
 }
+*/
 
 // EOF
 //lines 190
