@@ -5,25 +5,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Src/Network/Index.c \
 ../Core/Src/Network/http_cgi.c \
-../Core/Src/Network/http_ssi.c \
-../Core/Src/Network/loopcontrol.c \
-../Core/Src/Network/speedcontrol.c 
+../Core/Src/Network/http_ssi.c 
 
 OBJS += \
-./Core/Src/Network/Index.o \
 ./Core/Src/Network/http_cgi.o \
-./Core/Src/Network/http_ssi.o \
-./Core/Src/Network/loopcontrol.o \
-./Core/Src/Network/speedcontrol.o 
+./Core/Src/Network/http_ssi.o 
 
 C_DEPS += \
-./Core/Src/Network/Index.d \
 ./Core/Src/Network/http_cgi.d \
-./Core/Src/Network/http_ssi.d \
-./Core/Src/Network/loopcontrol.d \
-./Core/Src/Network/speedcontrol.d 
+./Core/Src/Network/http_ssi.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -33,7 +24,7 @@ Core/Src/Network/%.o Core/Src/Network/%.su: ../Core/Src/Network/%.c Core/Src/Net
 clean: clean-Core-2f-Src-2f-Network
 
 clean-Core-2f-Src-2f-Network:
-	-$(RM) ./Core/Src/Network/Index.d ./Core/Src/Network/Index.o ./Core/Src/Network/Index.su ./Core/Src/Network/http_cgi.d ./Core/Src/Network/http_cgi.o ./Core/Src/Network/http_cgi.su ./Core/Src/Network/http_ssi.d ./Core/Src/Network/http_ssi.o ./Core/Src/Network/http_ssi.su ./Core/Src/Network/loopcontrol.d ./Core/Src/Network/loopcontrol.o ./Core/Src/Network/loopcontrol.su ./Core/Src/Network/speedcontrol.d ./Core/Src/Network/speedcontrol.o ./Core/Src/Network/speedcontrol.su
+	-$(RM) ./Core/Src/Network/http_cgi.d ./Core/Src/Network/http_cgi.o ./Core/Src/Network/http_cgi.su ./Core/Src/Network/http_ssi.d ./Core/Src/Network/http_ssi.o ./Core/Src/Network/http_ssi.su
 
 .PHONY: clean-Core-2f-Src-2f-Network
 

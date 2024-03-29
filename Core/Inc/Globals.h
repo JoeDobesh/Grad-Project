@@ -45,6 +45,18 @@ typedef enum _STATES {
 	stateTen
 } STATES;
 
+#define KERNEL_MAILBOX_ID			0
+#define SERVER_MAILBOX_ID			1
+#define SPEED_CONTROL_MAILBOX_ID 	2
+#define CROSSING_GATE_MAILBOX_ID	3
+#define CROSSOVER_SWITCH_MAILBOX_ID	4
+
+#define KERNEL_PIPELINE_ID				0
+#define SERVER_PIPELINE_ID				1
+#define SPEED_CONTROL_PIPELINE_ID		2
+#define CROSSING_GATE_PIPELINE_ID		3
+#define CROSSOVER_SWITCH_PIPELINE_ID	4
+
 //lines 20
 
 #ifdef __cplusplus

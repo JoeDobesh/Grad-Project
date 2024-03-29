@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#define CROSSING_STACK_SIZE 1000
+
 #include "Globals.h"
 #include "LayoutDefinitions.h"
 

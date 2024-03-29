@@ -10,6 +10,8 @@
 #define MAX_MAIL_BOXES 16
 #define MAX_MESSAGE_COUNT 16
 
+uint32_t mailbagStack[MAILBAG_STACK_SIZE];
+
 typedef struct _MAIL_BOX
 {
 	uint32_t address;

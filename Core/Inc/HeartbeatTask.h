@@ -7,6 +7,8 @@ extern "C" {
 
 #include "Globals.h"
 
+#define HEARTBEAT_STACK_SIZE 100
+
 void HeartbeatTask(void);
 
 #ifdef __cplusplus

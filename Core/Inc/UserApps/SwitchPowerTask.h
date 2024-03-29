@@ -15,6 +15,8 @@ extern "C" {
 #include "Globals.h"
 #include "LayoutDefinitions.h"
 
+#define CROSSOVER_STACK_SIZE 1000
+
 typedef enum _SWITCH_STATES_
 {
 	SWITCH_OPEN = 0,

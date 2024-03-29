@@ -1,6 +1,8 @@
-../Core/Src/KernalThread.c:95:13:KernalThreadInit	16	static
-../Core/Src/KernalThread.c:109:6:TimeToContextSwitch	4	static
-../Core/Src/KernalThread.c:121:6:vTaskSwitchContext	4	static
-../Core/Src/KernalThread.c:225:6:KernalTask	16	static
-../Core/Src/KernalThread.c:280:6:KernalRegister	24	static
-../Core/Src/KernalThread.c:298:6:KernalRelease	24	static
+../Core/Src/KernalThread.c:67:6:TimeToContextSwitch	4	static
+../Core/Src/KernalThread.c:86:13:PopNextPCB	24	static
+../Core/Src/KernalThread.c:116:13:PushLastPCB	24	static
+../Core/Src/KernalThread.c:151:18:InitialiseStack	16	static
+../Core/Src/KernalThread.c:176:13:LoadProcess	40	static
+../Core/Src/KernalThread.c:217:6:vTaskSwitchContext	16	static
+../Core/Src/KernalThread.c:243:13:KernalThreadInit	16	static
+../Core/Src/KernalThread.c:286:6:KernalTask	8	static

@@ -33,7 +33,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY 4
+//#define configMAX_SYSCALL_INTERRUPT_PRIORITY 4
+#define configPRIO_BITS 4
+#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY 15
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 5
+#define configKERNEL_INTERRUPT_PRIORITY (configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS))
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS))
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -181,14 +186,14 @@ void PendSV_Handler(void)
     /* This is a naked function. */
     __asm volatile
         (
-        "       mrs r0, psp                     \n"
-        "       isb                             \n"
+        "       mrs r0, psp                     \n" /* load previous stack into r0 */
+        "       isb                             \n" /* flush instruction pipeline */
         "                                       \n"
-        "       ldr     r3, pxCurrentTCBConst   \n" /* Get the location of the current TCB. */
-        "       ldr     r2, [r3]                \n"
+        "       ldr     r3, pxCurrentTCBConst   \n" /* Get the location of the current TCB and load the pointer into r3. */
+        "       ldr     r2, [r3]                \n" /* load the first TCB intem value into r2, Should be a uint32_t pointer */
         "                                       \n"
         "       tst r14, #0x10                  \n" /* Is the task using the FPU context?  If so, push high vfp registers. */
-        "       it eq                           \n"
+        "       it eq                           \n" /* FPU - Floating point Unit */
         "       vstmdbeq r0!, {s16-s31}         \n"
         "                                       \n"
         "       stmdb r0!, {r4-r11, r14}        \n" /* Save the core registers. */
@@ -200,7 +205,7 @@ void PendSV_Handler(void)
         "       dsb                             \n"
         "       isb                             \n"
         "       bl vTaskSwitchContext           \n"
-        "       mov r0, #0                      \n"
+        "       mov r0, #0                      \n" /* Start New Task */
         "       msr basepri, r0                 \n"
         "       ldmia sp!, {r0, r3}             \n"
         "                                       \n"

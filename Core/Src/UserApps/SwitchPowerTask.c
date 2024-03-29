@@ -13,6 +13,8 @@
 #define MAIN_SENSOR 0x20
 #define SIDE_SENSOR	0x40
 
+uint32_t crossoverStack[CROSSOVER_STACK_SIZE];
+
 static STATES msgState;
 static STATES state;
 
@@ -80,12 +82,6 @@ void SwitchPowerInit(void)
 	OpenSwitch();
 	SetMainPolarity(POSITIVE);
 	SetLoopPolarity(POSITIVE);
-	if(KernalRegister(SwitchPowerTask) == FALSE)
-	{
-		ReleaseTimer(timerId);
-		printf("Switch Power Init - Kernel Register Failed\r\n");
-		return;
-	}
 	printf("Switch Power Init - Passed\n");
 }
 

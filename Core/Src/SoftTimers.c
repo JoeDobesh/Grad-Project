@@ -11,8 +11,11 @@
 #include "UART_3.h"
 
 #define TIMER_SIZE 8
+#define TIMER_STACK_SIZE 1000
 
 extern UART_HandleTypeDef huart3;
+
+uint32_t softTimerStack[TIMER_STACK_SIZE];
 
 static TIMER softTimers[TIMER_SIZE];
 static BOOL testPassed;

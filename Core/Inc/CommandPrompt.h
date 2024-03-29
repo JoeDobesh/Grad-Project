@@ -14,6 +14,8 @@ extern "C" {
 
 #include "Globals.h"
 
+#define COMMAND_PROMPT_STACK_SIZE 1000
+
 BOOL CommandPromptInit(void);
 void CommandPrompt(void);
 

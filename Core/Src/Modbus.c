@@ -23,8 +23,9 @@
 #define EXCEPTION_MASK		0x80
 #define HEADER_SIZE			2
 
-
 extern UART_HandleTypeDef huart4;
+
+uint32_t modbusStack[MODBUS_STACK_SIZE];
 
 typedef enum MODBUS_STATES_
 {

@@ -16,6 +16,8 @@
 #define NEAR_1	0x0004
 #define FAR_2	0x0008
 
+uint32_t crossingStack[CROSSING_STACK_SIZE];
+
 typedef struct _CROSSING_INFO_
 {
 	const char* name;

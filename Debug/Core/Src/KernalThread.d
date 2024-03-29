@@ -39,8 +39,7 @@ Core/Src/KernalThread.o: ../Core/Src/KernalThread.c ../Core/Inc/Globals.h \
  ../Core/Inc/Disk/SD_Card.h ../Core/Inc/Disk/FATSystem.h \
  ../Core/Inc/Disk/Boot.h ../Core/Inc/Disk/SD_Card.h ../Core/Inc/RS485.h \
  ../Core/Inc/Modbus.h ../Core/Inc/Mutex.h ../Core/Inc/Event.h \
- ../Core/Inc/UserApps/CrossingTask.h \
- ../Core/Inc/UserApps/LayoutDefinitions.h ../LWIP/App/lwip.h \
+ ../LWIP/App/lwip.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/opt.h \
  ../LWIP/Target/lwipopts.h ../Core/Inc/main.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/debug.h \
@@ -75,7 +74,10 @@ Core/Src/KernalThread.o: ../Core/Src/KernalThread.c ../Core/Inc/Globals.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/httpd.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/httpd_opts.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/iana.h \
- ../Core/Inc/UserApps/PowerControlTask.h
+ ../Core/Inc/UserApps/PowerControlTask.h \
+ ../Core/Inc/UserApps/CrossingTask.h \
+ ../Core/Inc/UserApps/LayoutDefinitions.h \
+ ../Core/Inc/UserApps/SwitchPowerTask.h
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -129,8 +131,6 @@ Core/Src/KernalThread.o: ../Core/Src/KernalThread.c ../Core/Inc/Globals.h \
 ../Core/Inc/Modbus.h:
 ../Core/Inc/Mutex.h:
 ../Core/Inc/Event.h:
-../Core/Inc/UserApps/CrossingTask.h:
-../Core/Inc/UserApps/LayoutDefinitions.h:
 ../LWIP/App/lwip.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/opt.h:
 ../LWIP/Target/lwipopts.h:
@@ -168,3 +168,6 @@ Core/Src/KernalThread.o: ../Core/Src/KernalThread.c ../Core/Inc/Globals.h \
 ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/httpd_opts.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/prot/iana.h:
 ../Core/Inc/UserApps/PowerControlTask.h:
+../Core/Inc/UserApps/CrossingTask.h:
+../Core/Inc/UserApps/LayoutDefinitions.h:
+../Core/Inc/UserApps/SwitchPowerTask.h:

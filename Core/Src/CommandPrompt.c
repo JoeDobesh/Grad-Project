@@ -22,6 +22,8 @@
 extern UART_HandleTypeDef huart3;
 extern DISK myDisk;
 
+int32_t commandPromptStack[COMMAND_PROMPT_STACK_SIZE];
+
 static uint8_t cpState, testState;
 static uint8_t runState, sdState;
 static char inputBuffer[INPUT_BUFFER_SIZE];

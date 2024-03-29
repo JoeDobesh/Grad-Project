@@ -10,6 +10,8 @@
 extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart3;
 
+uint32_t speedControlStack[SPEED_CONTROL_STACK_SIZE];
+
 static uint32_t outputVoltage;
 static uint32_t pulseWidth = 1;
 static uint8_t pcState = 0;
@@ -73,17 +75,7 @@ void PowerControlSet(uint32_t pulseWidth)
 //*****************************************************************************
 BOOL RunPowerControl(void)
 {
-	if ( KernalRegister(PowerControlTask) == FALSE)
-	{
-		status = FALSE;
-		printf("Fail - Could Not Register Power Control With Kernel\n");
-	}
-	else
-	{
-		status = TRUE;
-	}
-
-	return status;
+	return TRUE;
 }
 
 //*****************************************************************************
@@ -129,7 +121,6 @@ void PowerControlTask(void)
 		}
 		break;
 	default:
-		KernalRelease(PowerControlTask);
 		status = FALSE;
 		break;
 	}

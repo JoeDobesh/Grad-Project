@@ -14,6 +14,8 @@ extern "C" {
 
 #include "Globals.h"
 
+#define MODBUS_STACK_SIZE   1000
+
 void ModbusInit(void);
 void ModbusTask(void);
 void ModbusPollTask(void);

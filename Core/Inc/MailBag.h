@@ -15,6 +15,7 @@ extern "C" {
 #include "Globals.h"
 
 #define MAX_MESSAGE_SIZE 256
+#define MAILBAG_STACK_SIZE 1000
 
 typedef struct _MESSAGE
 {
