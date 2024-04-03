@@ -10,24 +10,14 @@
 extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart3;
 
-uint32_t speedControlStack[SPEED_CONTROL_STACK_SIZE];
-
-static uint32_t outputVoltage;
 static uint32_t pulseWidth = 1;
-static uint8_t pcState = 0;
-static BOOL status;
-
 //*****************************************************************************
 // PowerControlInit
 //*****************************************************************************
 void PowerControlInit(void)
 {
-	outputVoltage = 0;
 	pulseWidth = 1;
-	pcState = 0;
 	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pulseWidth);
-	status = FALSE;
-	printf("PowerControlInit - Passed\r\n");
 }
 
 //*****************************************************************************
@@ -55,52 +45,16 @@ void PowerControlIncrament(void)
 }
 
 //*****************************************************************************
-// PowerControlSet
-//*****************************************************************************
-void PowerControlSet(uint32_t pulseWidth)
-{
-	if (pulseWidth > 100)
-	{
-		pulseWidth = 100;
-	}
-	if (pulseWidth < 1)
-	{
-		pulseWidth = 1;
-	}
-	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pulseWidth);
-}
-
-//*****************************************************************************
-//* RunPowerControl
-//*****************************************************************************
-BOOL RunPowerControl(void)
-{
-	return TRUE;
-}
-
-//*****************************************************************************
-// GetPowerControlStatus
-//*****************************************************************************
-BOOL GetPowerControlStatus(void)
-{
-	return status;
-}
-
-//*****************************************************************************
 // PowerControlTask
 //*****************************************************************************
 void PowerControlTask(void)
 {
-	static char ch;
+	char ch = '\0';
 	uint32_t retVal;
 
-	switch(pcState)
+	printf("Power Control: < = decrease, > = increase, 0 = exit\n");
+	while(ch != '0')
 	{
-	case 0:
-		printf("Power Control: < = decrease, > = increase, 0 = exit\n");
-		pcState++;
-		break;
-	case 1:
 		retVal = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10); //HAL_MAX_DELAY);
 		if(retVal == HAL_UART_ERROR_NONE)
 		{
@@ -114,34 +68,8 @@ void PowerControlTask(void)
 				PowerControlIncrament();
 				printf("Pulsewidth: %d\n", pulseWidth);
 			}
-			if(ch == '0')
-			{
-				pcState++;
-			}
 		}
-		break;
-	default:
-		status = FALSE;
-		break;
 	}
-}
-
-//*****************************************************************************
-// PowerControlInterrupt
-//*****************************************************************************
-void PowerControlInterrupt(void)
-{
-	//static uint32_t pulseWidth = 10;
-		//if ( htim == &htim4)
-		//{
-		//	pulseWidth = (pulseWidth + 1) % 100;
-		//	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pulseWidth);
-		//}
-
-
-	//const uint32_t step = 2;
-	//uint32_t compare = __HAL_TIM_GET_COMPARE(&htim4, TIM_CHANNEL_2) + step;
-	//__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, (compare <= 100)? compare: 0 );
 }
 
 //EOF

@@ -24,7 +24,7 @@ typedef enum _SWITCH_STATES_
 	SWITCH_CLOSED
 }SWITCH_STATES;
 
-void SwitchPowerInit(void);
+//void SwitchPowerInit(void);
 void SwitchPowerTask(void);
 void OpenSwitch(void);
 void CloseSwitch(void);

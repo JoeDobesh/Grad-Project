@@ -14,17 +14,11 @@ extern "C" {
 
 #include "Globals.h"
 
-#define SPEED_CONTROL_STACK_SIZE 1000
-
 void PowerControlInit(void);
 uint32_t GetPulseWidth(void);
 void PowerControlDecrament(void);
 void PowerControlIncrament(void);
-void PowerControlSet(uint32_t);
-BOOL RunPowerControl(void);
-BOOL GetPowerControlStatus(void);
 void PowerControlTask(void);
-void PowerControlInterrupt(void);
 
 #ifdef __cplusplus
 }

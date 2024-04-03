@@ -25,7 +25,6 @@ typedef struct _MESSAGE
 	char* messagePtr;
 }MESSAGE;
 
-void MailBagInit(void);
 uint32_t RegisterMailBox(uint32_t myAddress);
 BOOL ReleaseMailBox(int addr);
 BOOL SendMessage(MESSAGE myMessage);

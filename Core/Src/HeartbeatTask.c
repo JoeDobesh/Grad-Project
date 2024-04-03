@@ -13,56 +13,43 @@
 
 uint32_t heartbeatStack[HEARTBEAT_STACK_SIZE];
 
-typedef struct __HEARTBEAT_MEMORY__
-{
-	uint32_t timeout;
-	STATES heartbeatTaskState;
-	BOOL exit;
-}HEARTBEAT_MEMORY;
-
 //*****************************************************************************
 // HeartbeatTask
 //*****************************************************************************
 void HeartbeatTask(void)
 {
-	HEARTBEAT_MEMORY * heartbeatMemoryPtr;
+	BOOL exit = FALSE;
+	STATES heartbeatTaskState = stateZero;
+	uint32_t timeout = HAL_GetTick() + FLASH_TIME_MS;
 
-	heartbeatMemoryPtr = malloc(sizeof(HEARTBEAT_MEMORY));
-	if(heartbeatMemoryPtr == NULL)
-	{
-		return;
-	}
-	heartbeatMemoryPtr->exit = FALSE;
-	heartbeatMemoryPtr->heartbeatTaskState = stateZero;
-	heartbeatMemoryPtr->timeout = HAL_GetTick() + FLASH_TIME_MS;
 	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 0);
-	while(heartbeatMemoryPtr->exit == FALSE)
+	while(exit == FALSE)
 	{
-		switch(heartbeatMemoryPtr->heartbeatTaskState)
+		switch(heartbeatTaskState)
 		{
 		case stateZero:
-			if ( heartbeatMemoryPtr->timeout < HAL_GetTick() )
+			if (timeout < HAL_GetTick() )
 			{
 				HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 1);
-				heartbeatMemoryPtr->timeout = HAL_GetTick() + FLASH_TIME_MS;
-				heartbeatMemoryPtr->heartbeatTaskState++;
+				timeout = HAL_GetTick() + FLASH_TIME_MS;
+				heartbeatTaskState++;
 			}
 			break;
 		case stateOne:
-			if ( heartbeatMemoryPtr->timeout <  HAL_GetTick())
+			if (timeout <  HAL_GetTick())
 			{
 				HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 0);
-				heartbeatMemoryPtr->timeout = HAL_GetTick() + FLASH_TIME_MS;
-				heartbeatMemoryPtr->heartbeatTaskState--;
+				timeout = HAL_GetTick() + FLASH_TIME_MS;
+				heartbeatTaskState--;
 			}
 			break;
 		default:
-			heartbeatMemoryPtr->heartbeatTaskState = stateZero;
+			heartbeatTaskState = stateZero;
 			break;
 		}
 	}
-	free(heartbeatMemoryPtr);
 }
 
 // EOF
-//lines 40
+
+//lines 37

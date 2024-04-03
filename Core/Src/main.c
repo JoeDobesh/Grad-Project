@@ -23,7 +23,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "KernalThread.h"
-#include "UART_3.h"
 #include "SPI.h"
 #include "SoftTimers.h"
 #include "RS485.h"
@@ -80,21 +79,6 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/*
-void HAL_SYSTICK_Callback(void)
-{
-	//Disable interrupts
-	__disable_irq();
-	if(TimeToContextSwitch() == TRUE)
-	{
-		//trigger PendSV
-		HAL_NVIC_SetPendingIRQ(PendSV_IRQn);
-	}
-	//Enable interrupts
-	__enable_irq();
-}
-*/
-
 int __io_putchar(int ch)
 {
 	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
@@ -116,34 +100,18 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		return;
 	}
-	if ( huart->Instance == USART3)
-	{
-		UART_3_TxInterrupt(huart);
-	}
-	else if ( huart->Instance == UART4)
+	if ( huart->Instance == UART4)
 	{
 		RS485TxInterrupt();
 	}
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
 	if ( huart == NULL)
 	{
 		return;
 	}
-	if ( huart->Instance == USART3)
-	{
-		UART_3_RxInterrupt(huart);
-	}
-	else if ( huart->Instance == UART4)
-	{
-		//RS485RxInterrupt();
-	}
-}
-
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-{
 	if ( huart->Instance == UART4)
 	{
 		RS485RxInterrupt(Size);
@@ -152,18 +120,13 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
 {
-	if (htim == &htim2)
+	if ( htim == NULL)
 	{
-		//ContextSwitchInterrupt();
+		return;
 	}
 	if (htim == &htim3)
 	{
 		TimerInterrupt();
-	}
-
-	if (htim == &htim4)
-	{
-		PowerControlInterrupt();
 	}
 }
 
@@ -182,7 +145,6 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 		//SPI_RxInterrupt();
 	}
 }
-extern struct netif gnetif;
 /* USER CODE END 0 */
 
 /**
@@ -228,7 +190,6 @@ int main(void)
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
   HAL_TIM_Base_Start_IT(&htim3);
   httpd_init();
-  //http_server_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -239,8 +200,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  //ethernetif_input(&gnetif);
-	  //sys_check_timeouts();
   }
   /* USER CODE END 3 */
 }

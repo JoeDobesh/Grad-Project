@@ -113,6 +113,7 @@ typedef struct _PCB_
 }PCB;
 
 void KernalTask(void);
+void ForceContextSwitch(void);
 BOOL TimeToContextSwitch(void);
 void vTaskSwitchContext(void);
 

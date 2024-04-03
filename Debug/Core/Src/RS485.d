@@ -31,7 +31,7 @@ Core/Src/RS485.o: ../Core/Src/RS485.c ../Core/Inc/RS485.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/main.h ../Core/Inc/UART_3.h
+ ../Core/Inc/main.h
 ../Core/Inc/RS485.h:
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -66,4 +66,3 @@ Core/Src/RS485.o: ../Core/Src/RS485.c ../Core/Inc/RS485.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/main.h:
-../Core/Inc/UART_3.h:

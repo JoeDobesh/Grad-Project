@@ -12,14 +12,15 @@
 extern "C" {
 #endif
 
-#define CROSSING_STACK_SIZE 1000
-
 #include "Globals.h"
 #include "LayoutDefinitions.h"
 
-void CrossingInit(void);
+#define CROSSING_STACK_SIZE 1000
+
+#define GATE_CLOSED TRUE
+#define GATE_OPEN	FALSE
+
 void CrossingTask(void);
-BOOL GetSersorValue(uint8_t);
 uint8_t GetSersorValues(void);
 void SelectCrossing(uint8_t);
 uint8_t GetCrossing(void);

@@ -28,7 +28,7 @@ static MAIL_BOX mailBoxes[MAX_MAIL_BOXES];
 //*****************************************************************************
 // MailBagInit
 //*****************************************************************************
-void MailBagInit(void)
+static void MailBagInit(void)
 {
 	for(int i = 0; i < MAX_MAIL_BOXES; i++)
 	{
@@ -211,34 +211,39 @@ BOOL RetrieveMessage(MESSAGE *myMessage)
 void MailbagTask(void)
 {
 	uint32_t tempAddress;
+	BOOL exit = FALSE;
 
-	for ( int i = 0; i < MAX_MAIL_BOXES; i++)
+	MailBagInit();
+	while(exit == FALSE)
 	{
-		if(mailBoxes[i].txHeadCounter == mailBoxes[i].txTailCounter)
+		for ( int i = 0; i < MAX_MAIL_BOXES; i++)
 		{
-			continue;
-		}
-		tempAddress = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].receiver;
-		for ( int j = 0; j < MAX_MAIL_BOXES; j++)
-		{
-			if ( mailBoxes[j].address == tempAddress)
+			if(mailBoxes[i].txHeadCounter == mailBoxes[i].txTailCounter)
 			{
-				mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr = malloc(mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
-				if(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr == NULL)
+				continue;
+			}
+			tempAddress = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].receiver;
+			for ( int j = 0; j < MAX_MAIL_BOXES; j++)
+			{
+				if ( mailBoxes[j].address == tempAddress)
 				{
-					return;
+					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr = malloc(mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
+					if(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr == NULL)
+					{
+						return;
+					}
+					memcpy(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
+					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].receiver = tempAddress;
+					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].sender = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].sender;
+					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].size = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size;
+					mailBoxes[j].rxHeadCounter++;
+					mailBoxes[j].rxHeadCounter = (mailBoxes[j].rxHeadCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[j].rxHeadCounter;
+					free (mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr);
+					mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr = NULL;
+					mailBoxes[i].txTailCounter++;
+					mailBoxes[i].txTailCounter = (mailBoxes[i].txTailCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[i].txTailCounter;
+					break;
 				}
-				memcpy(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
-				mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].receiver = tempAddress;
-				mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].sender = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].sender;
-				mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].size = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size;
-				mailBoxes[j].rxHeadCounter++;
-				mailBoxes[j].rxHeadCounter = (mailBoxes[j].rxHeadCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[j].rxHeadCounter;
-				free (mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr);
-				mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr = NULL;
-				mailBoxes[i].txTailCounter++;
-				mailBoxes[i].txTailCounter = (mailBoxes[i].txTailCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[i].txTailCounter;
-				break;
 			}
 		}
 	}

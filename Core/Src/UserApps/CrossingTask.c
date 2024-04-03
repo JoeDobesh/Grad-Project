@@ -15,6 +15,7 @@
 #define NEAR_2	0x0002
 #define NEAR_1	0x0004
 #define FAR_2	0x0008
+#define CROSSING_SENSOR_MASK 0x000F
 
 uint32_t crossingStack[CROSSING_STACK_SIZE];
 
@@ -37,18 +38,14 @@ static CROSSING_INFO crossings[] =
 
 static STATES crossingState;
 static STATES msgState;
-static BOOL closeEastSensor;
-static BOOL closeWestSensor;
-static BOOL farEastSensor;
-static BOOL farWestSensor;
 static BOOL gateStatus;
 static uint32_t timerId;
 static uint8_t crossingSelect = 0;
-
+static uint16_t sensorData;
 //*****************************************************************************
 // CrossingInit
 //*****************************************************************************
-void CrossingInit(void)
+static void CrossingInit(void)
 {
 	TIMER_PARAMS timerParams;
 
@@ -64,44 +61,8 @@ void CrossingInit(void)
 	crossingSelect  = 0;
 	crossingState   = stateZero;
 	msgState        = stateZero;
-	closeEastSensor = FALSE;
-	closeWestSensor = FALSE;
-	farEastSensor   = FALSE;
-	farWestSensor   = FALSE;
-	gateStatus      = FALSE;
-	if(KernalRegister(CrossingTask) == FALSE)
-	{
-		ReleaseTimer(timerId);
-		printf("Crossing Init - Kernel Register Failed\r\n");
-		return;
-	}
-	printf("Crossing Init - Passed\n");
-}
-
-//*****************************************************************************
-// GetSersorValue
-//*****************************************************************************
-BOOL GetSersorValue(uint8_t ii)
-{
-	switch (ii)
-	{
-	case 0:
-		return closeEastSensor;
-		break;
-	case 1:
-		return closeWestSensor;
-		break;
-	case 2:
-		return farEastSensor;
-		break;
-	case 3:
-		return farWestSensor;
-		break;
-	case 4:
-	default:
-		return gateStatus;
-		break;
-	}
+	gateStatus      = GATE_OPEN;
+	sensorData		= 0;
 }
 
 //*****************************************************************************
@@ -109,163 +70,36 @@ BOOL GetSersorValue(uint8_t ii)
 //*****************************************************************************
 uint8_t GetSersorValues(void)
 {
-	uint8_t retVal = 0;
-
-	if(closeEastSensor)
-	{
-		retVal |= 0x02;
-	}
-	if(closeWestSensor)
-	{
-		retVal |= 0x04;
-	}
-	if(farEastSensor)
-	{
-		retVal |= 0x01;
-	}
-	if(farWestSensor)
-	{
-		retVal |= 0x08;
-	}
-
-	return retVal;
+	return (uint8_t)(sensorData & CROSSING_SENSOR_MASK);
 }
-//*****************************************************************************
-// AllSensorsClear
-//*****************************************************************************
-//static BOOL AllSensorsClear(void)
-//{
-//	if(closeEastSensor == FALSE &&
-//	   closeWestSensor == FALSE &&
-//	   farEastSensor == FALSE &&
-//	   farWestSensor == FALSE)
-//	{
-//		return TRUE;
-//	}
-
-//	return FALSE;
-//}
-
-//*****************************************************************************
-// Convert2Sixteen
-//*****************************************************************************
-//static uint16_t Convert2Sixteen(uint8_t * array)
-//{
-//	uint16_t retVal;
-
-//	retVal = (((uint16_t)array[0]) << 8) & 0xFF00;
-//	retVal |= (((uint16_t)array[1]) & 0x00FF);
-
-//	return retVal;
-//}
-
-//*****************************************************************************
-// GetSensorStatus
-//*****************************************************************************
-/*
-static void GetSensorStatus(uint8_t * data, uint8_t size)
-{
-	uint8_t count;
-	uint16_t retVal;
-
-	count = size;
-	if(count <= 1)
-	{
-		return;
-	}
-	retVal = Convert2Sixteen(&data[0]);
-	if(retVal > 0x00FF)
-	{
-		closeEastSensor = TRUE;
-	}
-	count -= 2;
-	if(count <= 1)
-	{
-		return;
-	}
-	retVal = Convert2Sixteen(&data[2]);
-	if(retVal > 0x00FF)
-	{
-		closeWestSensor = TRUE;
-	}
-	count -= 2;
-	if(count <= 1)
-	{
-		return;
-	}
-	retVal = Convert2Sixteen(&data[4]);
-	if(retVal > 0x00FF)
-	{
-		farEastSensor = TRUE;
-	}
-	count -= 2;
-	if(count <= 1)
-	{
-		return;
-	}
-	retVal = Convert2Sixteen(&data[6]);
-	if(retVal > 0x00FF)
-	{
-		farWestSensor = FALSE;
-	}
-}
-*/
 
 //*****************************************************************************
 // CrossingTask
 //*****************************************************************************
 void CrossingTask(void)
 {
-	//uint8_t sensorData[32];
-	uint16_t sensorData;
-	//uint8_t size;
+	BOOL exit = FALSE;
 
-	/*
-	switch(msgState)
+	CrossingInit();
+	while(exit == FALSE)
 	{
-	case stateZero:
-		if(ReadHoldingRegisters(0x00, 4, crossings[crossingSelect].address) == TRUE)
+		sensorData = GetCrossingSensors();
+		switch(crossingState)
 		{
-			msgState++;
-			StartTimer(timerId, SCAN_TIMEOUT);
-		}
-		break;
-	case stateOne:
-		if (CheckTimer(timerId) == TRUE)
-		{
-			msgState--;
-		}
-		if(ModebusGetMessage(sensorData, &size) == TRUE)
-		{
-			GetSensorStatus(sensorData, size);
-			StartTimer(timerId, SCAN_TIMEOUT);
-			msgState++;
-		}
-		break;
-	case stateTwo:
-	default:
-		if (CheckTimer(timerId) == TRUE)
-		{
-			msgState = stateZero;
-		}
-		break;
-	}
-	*/
-	sensorData = GetCrossingSensors();
-	switch(crossingState)
-	{
-	case stateZero:
-	case stateOne:
-			if(sensorData & FAR_1)
+		case stateZero:
+		case stateOne:
+			if(sensorData & FAR_1 || sensorData & NEAR_2)
 			{
 				//Close Gates
 				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+				gateStatus    = GATE_CLOSED;
 				crossingState = stateTwo;
 			}
-			else if(sensorData & FAR_2)
+			else if(sensorData & FAR_2 || sensorData & NEAR_1)
 			{
 				//Close Gates
 				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+				gateStatus    = GATE_CLOSED;
 				crossingState = stateThree;
 			}
 			break;
@@ -286,6 +120,7 @@ void CrossingTask(void)
 			{
 				//Open Gates
 				WriteSingleRegister(0x00, 0, crossings[crossingSelect].address);
+				gateStatus    = GATE_OPEN;
 				crossingState = stateSix;
 			}
 			break;
@@ -294,6 +129,7 @@ void CrossingTask(void)
 			{
 				//Open Gates
 				WriteSingleRegister(0x00, 0, crossings[crossingSelect].address);
+				gateStatus    = GATE_OPEN;
 				crossingState = stateSix;
 			}
 			break;
@@ -306,18 +142,21 @@ void CrossingTask(void)
 			{
 				//Close Gates
 				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+				gateStatus    = GATE_CLOSED;
 				crossingState = stateThree;
 			}
 			else if(sensorData & NEAR_2)
 			{
 				//Close Gates
 				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+				gateStatus    = GATE_CLOSED;
 				crossingState = stateTwo;
 			}
 			break;
 		default:
 			crossingState = stateOne;
 			break;
+		}
 	}
 }
 

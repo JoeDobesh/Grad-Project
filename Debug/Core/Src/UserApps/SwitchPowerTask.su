@@ -1,8 +1,8 @@
 ../Core/Src/UserApps/SwitchPowerTask.c:38:13:SetLoopPolarity	16	static
 ../Core/Src/UserApps/SwitchPowerTask.c:51:13:SetMainPolarity	16	static
-../Core/Src/UserApps/SwitchPowerTask.c:64:6:SwitchPowerInit	40	static
+../Core/Src/UserApps/SwitchPowerTask.c:64:13:SwitchPowerInit	40	static
 ../Core/Src/UserApps/SwitchPowerTask.c:91:6:CloseSwitch	4	static
 ../Core/Src/UserApps/SwitchPowerTask.c:104:6:OpenSwitch	4	static
 ../Core/Src/UserApps/SwitchPowerTask.c:117:15:GetSwitchStatus	4	static
 ../Core/Src/UserApps/SwitchPowerTask.c:125:13:GetSensorStatus	16	static
-../Core/Src/UserApps/SwitchPowerTask.c:157:6:SwitchPowerTask	8	static
+../Core/Src/UserApps/SwitchPowerTask.c:157:6:SwitchPowerTask	16	static

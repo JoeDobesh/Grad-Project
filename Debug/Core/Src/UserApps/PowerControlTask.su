@@ -1,9 +1,5 @@
-../Core/Src/UserApps/PowerControlTask.c:23:6:PowerControlInit	8	static
-../Core/Src/UserApps/PowerControlTask.c:36:10:GetPulseWidth	4	static
-../Core/Src/UserApps/PowerControlTask.c:42:6:PowerControlDecrament	4	static
-../Core/Src/UserApps/PowerControlTask.c:51:6:PowerControlIncrament	4	static
-../Core/Src/UserApps/PowerControlTask.c:60:6:PowerControlSet	16	static
-../Core/Src/UserApps/PowerControlTask.c:76:6:RunPowerControl	4	static
-../Core/Src/UserApps/PowerControlTask.c:84:6:GetPowerControlStatus	4	static
-../Core/Src/UserApps/PowerControlTask.c:92:6:PowerControlTask	16	static
-../Core/Src/UserApps/PowerControlTask.c:132:6:PowerControlInterrupt	4	static
+../Core/Src/UserApps/PowerControlTask.c:17:6:PowerControlInit	4	static
+../Core/Src/UserApps/PowerControlTask.c:26:10:GetPulseWidth	4	static
+../Core/Src/UserApps/PowerControlTask.c:32:6:PowerControlDecrament	4	static
+../Core/Src/UserApps/PowerControlTask.c:41:6:PowerControlIncrament	4	static
+../Core/Src/UserApps/PowerControlTask.c:50:6:PowerControlTask	16	static

@@ -16,7 +16,6 @@ extern "C" {
 
 #define COMMAND_PROMPT_STACK_SIZE 1000
 
-BOOL CommandPromptInit(void);
 void CommandPrompt(void);
 
 #ifdef __cplusplus

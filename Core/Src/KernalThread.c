@@ -4,12 +4,10 @@
  *  Created on: Feb 16, 2023
  *      Author: jdobesh
  */
-//pragma GCC optimize("O0")
 
 #include "Globals.h"
 #include "FIFO.h"
 #include "KernalThread.h"
-#include "UART_3.h"
 #include "CommandPrompt.h"
 #include "HeartbeatTask.h"
 #include "SoftTimers.h"
@@ -81,6 +79,14 @@ BOOL TimeToContextSwitch(void)
 }
 
 //*****************************************************************************
+// ForceContextSwitch
+//*****************************************************************************
+void ForceContextSwitch(void)
+{
+	quantumCounter = SYSTICK_VALUE_MS;
+}
+
+//*****************************************************************************
 //* PopNextPCB
 //*****************************************************************************
 static BOOL PopNextPCB(QUEUE * queue, PCB * pcb)
@@ -148,7 +154,7 @@ static BOOL PushLastPCB(QUEUE * queue, PCB * pcb)
 //*****************************************************************************
 // InitialiseStack
 //*****************************************************************************
-static uint32_t *InitialiseStack( uint32_t * topOfStack, USER_PROCESS_PTR functionPtr) //, void *pvParameters )
+static uint32_t * InitialiseStack( uint32_t * topOfStack, USER_PROCESS_PTR functionPtr) //, void *pvParameters )
 {
 	//Simulate the stack frame as it would be created by a context switch interrupt.
 	//Offset added to account for the way the MCU uses the stack on entry/exit of interrupts,
@@ -248,7 +254,12 @@ static void KernalThreadInit(void)
 	pxCurrentTCB                 = NULL;
 	csDisable					 = TRUE;
 	processIDCounter             = 0;
-	if(LoadProcess(HeartbeatTask, "Mailbag\n", mailbagStack, MAILBAG_STACK_SIZE, processIDCounter) == FALSE)
+	if(LoadProcess(HeartbeatTask, "Heartbeat\n", heartbeatStack, HEARTBEAT_STACK_SIZE, processIDCounter) == FALSE)
+	{
+		printf("Mailbag Task Load Failure\n");
+	}
+	processIDCounter++;
+	if(LoadProcess(MailbagTask, "Mailbag\n", mailbagStack, MAILBAG_STACK_SIZE, processIDCounter) == FALSE)
 	{
 		printf("Mailbag Task Load Failure\n");
 	}
@@ -261,11 +272,6 @@ static void KernalThreadInit(void)
 	if(LoadProcess(ModbusTask, "Modbus\n", modbusStack, MODBUS_STACK_SIZE, processIDCounter) == FALSE)
 	{
 		printf("Modbus Task Load Failure\n");
-	}
-	processIDCounter++;
-	if(LoadProcess(PowerControlTask, "SpeedControl\n", speedControlStack, SPEED_CONTROL_STACK_SIZE, processIDCounter) == FALSE)
-	{
-		printf("Speed Control Task Load Failure\n");
 	}
 	processIDCounter++;
 	if(LoadProcess(CrossingTask, "Crossing\n", crossingStack, CROSSING_STACK_SIZE, processIDCounter) == FALSE)
@@ -285,40 +291,27 @@ static void KernalThreadInit(void)
 //*****************************************************************************
 void KernalTask(void)
 {
-	KernalThreadInit();
+	BOOL exit = FALSE;
+
 	SoftTimerInit();
-	RealTimeClockInit();
-	EventsInit();
 	MutexInit();
 	FIFO_Init();
-	UART_3_Init();
-	MailBagInit();
-	CommandPromptInit();
 	SD_CardInit();
 	InitFAT();
-	RS485Init();
-	ModbusInit();
-	//CrossingInit();
 	HttpdSsiInit();
 	HttpdCgiInit();
-	//NetComInit();
+	RS485Init();
+	ModbusInit();
 	PowerControlInit();
-	//RunPowerControl();
-	while(TRUE)
+	KernalThreadInit();
+	processIDCounter = 0;
+	csDisable = FALSE;
+	while(exit == FALSE)
 	{
-		//HeartbeatTask();
-		//TimerTask(); //This needs to be removed and run from CommandPrompt\Test
-		//MailbagTask();
-		//CommandPrompt();
-		//ModbusPollTask();
-		//ServerTask();
-		//SendTestTask();
-		//ReceiveTestTask();
-		//ModbusTask();
-		//NetComTask();
 		ethernetif_input(&gnetif);
 		sys_check_timeouts();
 	}
+	csDisable = TRUE;
 }
 
 // EOF

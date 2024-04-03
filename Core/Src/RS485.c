@@ -6,7 +6,6 @@
  */
 
 #include "RS485.h"
-#include "UART_3.h"
 
 #define CIRCULAR_BUFFER_SIZE 64
 
@@ -175,6 +174,26 @@ void RS485RxInterrupt(void)
 	}
 }
 */
+
+//*****************************************************************************
+// UART_3_SendString
+//*****************************************************************************
+static BOOL UART_3_SendString(char * data,  size_t size)
+{
+	uint8_t index;
+	uint8_t * ch = (uint8_t *)data;
+	if(size > 256)
+	{
+		return FALSE;
+	}
+	for(index = 0; index < size; index++)
+	{
+		HAL_UART_Transmit(&huart3, (uint8_t *)ch, 1, HAL_MAX_DELAY);
+		ch++;
+	}
+
+	return TRUE;
+}
 
 //*****************************************************************************
 // RS485Test

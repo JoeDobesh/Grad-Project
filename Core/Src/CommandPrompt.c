@@ -9,7 +9,6 @@
 #include "RS485.h"
 #include "CommandPrompt.h"
 #include "SoftTimers.h"
-#include "UART_3.h"
 #include "Modbus.h"
 #include "Boot.h"
 #include "Directories.h"
@@ -125,14 +124,31 @@ static void JumpToTest(void)
 //*****************************************************************************
 // CommandPromptInit
 //*****************************************************************************
-BOOL CommandPromptInit(void)
+static void CommandPromptInit(void)
 {
 	functionPtrIndex = 0;
 	cpState = 0;
 	runState = 0;
 	sdState = 0;
 	testState = 0;
-	printf("CommandPromptInit - Passed\n");
+}
+
+//*****************************************************************************
+// UART_3_SendString
+//*****************************************************************************
+static BOOL UART_3_SendString(char * data,  size_t size)
+{
+	uint8_t index;
+	uint8_t * ch = (uint8_t *)data;
+	if(size > 256)
+	{
+		return FALSE;
+	}
+	for(index = 0; index < size; index++)
+	{
+		HAL_UART_Transmit(&huart3, (uint8_t *)ch, 1, HAL_MAX_DELAY);
+		ch++;
+	}
 
 	return TRUE;
 }
@@ -142,13 +158,19 @@ BOOL CommandPromptInit(void)
 //*****************************************************************************
 void CommandPrompt(void)
 {
-	if ( functionPtrIndex < MAX_FUNCTION_COUNT)
+	BOOL exit = FALSE;
+
+	CommandPromptInit();
+	while(exit == FALSE)
 	{
-		(*functionArray[functionPtrIndex])();
-	}
-	else
-	{
-		JumpToMain();
+		if ( functionPtrIndex < MAX_FUNCTION_COUNT)
+		{
+			(*functionArray[functionPtrIndex])();
+		}
+		else
+		{
+			JumpToMain();
+		}
 	}
 }
 
@@ -275,7 +297,6 @@ static void RunMenuTask(void)
 		{
 			char str2[] = "Running Locomotive Speed Control\n";
 			UART_3_SendString(str2, sizeof(str2));
-			RunPowerControl();
 			runState = 3;
 		}
 		else if(strcmp(inputBuffer, "2") == 0)
@@ -296,10 +317,8 @@ static void RunMenuTask(void)
 		}
 		break;
 	case 3:
-		if ( GetPowerControlStatus() == FALSE )
-		{
-			runState = 0;
-		}
+		PowerControlTask();
+		runState = 0;
 		break;
 	case 4:
 		runState = 0;

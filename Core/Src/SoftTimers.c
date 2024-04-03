@@ -8,7 +8,6 @@
 #include "SoftTimers.h"
 #include "main.h"
 #include "KernalThread.h"
-#include "UART_3.h"
 
 #define TIMER_SIZE 8
 #define TIMER_STACK_SIZE 1000

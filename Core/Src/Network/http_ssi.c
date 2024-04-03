@@ -11,7 +11,6 @@
 #include "lwip/arch.h"
 #include "lwip/api.h"
 #include "lwip/apps/fs.h"
-//#include "httpserver.h"
 #include "lwip.h"
 #include "lwip/tcp.h"
 #include "tcp.h"
@@ -105,9 +104,7 @@ static char* GetCrossingImage(void)
 //*****************************************************************************
 static char* GetCrossingStatus(void)
 {
-	BOOL status = GetGateStatus();
-
-	if(status == FALSE)
+	if(GetGateStatus() == GATE_OPEN)
 	{
 		return "OPEN";
 	}

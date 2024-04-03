@@ -1,4 +1,4 @@
-../Core/Src/MailBag.c:31:6:MailBagInit	16	static
+../Core/Src/MailBag.c:31:13:MailBagInit	16	static
 ../Core/Src/MailBag.c:58:13:ResetMailBox	24	static
 ../Core/Src/MailBag.c:84:10:RegisterMailBox	24	static
 ../Core/Src/MailBag.c:112:6:ReleaseMailBox	24	static

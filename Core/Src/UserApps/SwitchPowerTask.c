@@ -61,7 +61,7 @@ static void SetMainPolarity(POLARITIES pol)
 //*****************************************************************************
 // SwitchPowerInit
 //*****************************************************************************
-void SwitchPowerInit(void)
+static void SwitchPowerInit(void)
 {
 	TIMER_PARAMS timerParams;
 
@@ -156,34 +156,40 @@ static void GetSensorStatus(void)
 //*****************************************************************************
 void SwitchPowerTask(void)
 {
-	GetSensorStatus();
-	if(switchState == SWITCH_OPEN)
+	BOOL exit = FALSE;
+
+	SwitchPowerInit();
+	while(exit == FALSE)
 	{
-		if((sensorMain == TRUE || sensorCommon == TRUE) && (mainLine == POSITIVE && loopLine == NEGATIVE))
+		GetSensorStatus();
+		if(switchState == SWITCH_OPEN)
 		{
-			SetLoopPolarity(POSITIVE);
-		}
-	}
-	else //switchState == CLOSED
-	{
-		if(mainLine == POSITIVE)
-		{
-			if(loopLine == POSITIVE)
+			if((sensorMain == TRUE || sensorCommon == TRUE) && (mainLine == POSITIVE && loopLine == NEGATIVE))
 			{
-				if(sensorCommon == TRUE && sensorLoop == FALSE)
-				{
-					SetLoopPolarity(NEGATIVE);
-				}
-				else if(sensorCommon == FALSE && sensorLoop == TRUE)
-				{
-					SetMainPolarity(NEGATIVE);
-				}
+				SetLoopPolarity(POSITIVE);
 			}
-			else
+		}
+		else //switchState == CLOSED
+		{
+			if(mainLine == POSITIVE)
 			{
-				if(sensorCommon == FALSE && sensorLoop == TRUE)
+				if(loopLine == POSITIVE)
 				{
-					SetMainPolarity(NEGATIVE);
+					if(sensorCommon == TRUE && sensorLoop == FALSE)
+					{
+						SetLoopPolarity(NEGATIVE);
+					}
+					else if(sensorCommon == FALSE && sensorLoop == TRUE)
+					{
+						SetMainPolarity(NEGATIVE);
+					}
+				}
+				else
+				{
+					if(sensorCommon == FALSE && sensorLoop == TRUE)
+					{
+						SetMainPolarity(NEGATIVE);
+					}
 				}
 			}
 		}

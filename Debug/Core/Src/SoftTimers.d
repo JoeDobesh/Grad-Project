@@ -31,8 +31,7 @@ Core/Src/SoftTimers.o: ../Core/Src/SoftTimers.c ../Core/Inc/SoftTimers.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/main.h ../Core/Inc/main.h ../Core/Inc/KernalThread.h \
- ../Core/Inc/UART_3.h
+ ../Core/Inc/main.h ../Core/Inc/main.h ../Core/Inc/KernalThread.h
 ../Core/Inc/SoftTimers.h:
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -69,4 +68,3 @@ Core/Src/SoftTimers.o: ../Core/Src/SoftTimers.c ../Core/Inc/SoftTimers.h \
 ../Core/Inc/main.h:
 ../Core/Inc/main.h:
 ../Core/Inc/KernalThread.h:
-../Core/Inc/UART_3.h:
