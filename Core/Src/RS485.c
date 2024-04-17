@@ -33,7 +33,6 @@ void RS485Init(void)
 	switch(retVal)
 	{
 		case HAL_OK:
-			printf("RS485Init - Passed\n");
 			break;
 		case HAL_ERROR:
 		case HAL_BUSY:

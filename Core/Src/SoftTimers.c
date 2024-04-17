@@ -32,7 +32,6 @@ void SoftTimerInit(void)
 		softTimers[i].counter = 0;
 	}
 	testState = 0;
-	printf("SoftTimerInit - Passed\n");
 }
 
 //*****************************************************************************

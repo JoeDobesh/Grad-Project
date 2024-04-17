@@ -105,7 +105,6 @@ BOOL InitFAT(void)
 		retVal = FALSE;
 		goto INIT_FAT_FAILED;
 	}
-	printf("InitFAT - Passed\n");
 
 INIT_FAT_FAILED:
 

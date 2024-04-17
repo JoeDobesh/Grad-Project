@@ -321,7 +321,6 @@ SDC_ERRORS SD_CardInit(void)
 	bootState = CARD_INIT;
 	if ( GetMasterBootRecord() == TRUE )
 	{
-		printf("SD_CardInit Passed\n");
 		bootState = BOOT_RECORD;
 	}
 	else

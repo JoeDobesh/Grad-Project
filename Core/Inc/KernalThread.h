@@ -14,15 +14,6 @@ extern "C" {
 
 #include "Globals.h"
 
-#define TASK_NAME_SIZE 32
-
-typedef enum _PCB_STATES_
-{
-	READY         = 0,
-	RUNNING       = 1,
-	UNKNOWN_STATE = 2
-}PCB_STATES;
-
 typedef struct tskTaskControlBlock
 {
 //  volatile portSTACK_TYPE *pxTopOfStack;
@@ -68,52 +59,9 @@ typedef struct tskTaskControlBlock
 
 } tskTCB;
 
-typedef void (*USER_PROCESS_PTR)(void);
-typedef struct __USER_THREAD__
-{
-	USER_PROCESS_PTR userThreadPtr;
-	BOOL used;
-}USER_THREAD;
-
-typedef struct _REGISTERS_
-{
-	uint32_t r0;
-	uint32_t r1;
-	uint32_t r2;
-	uint32_t r3;
-	uint32_t r4;
-	uint32_t r5;
-	uint32_t r6;
-	uint32_t r7;
-	uint32_t r8;
-	uint32_t r9;
-	uint32_t r10;
-	uint32_t r11;
-	uint32_t r12;
-	uint32_t sp;
-	uint32_t lr;
-	uint32_t psr;
-	uint32_t pc;
-}CORE_REGISTERS;
-typedef CORE_REGISTERS * CORE_REGS_PTR;
-
-typedef struct _PCB_
-{
-	volatile uint32_t * pTopOfStack;
-	uint32_t 		 	processId;
-	char 			 	name[TASK_NAME_SIZE];
-	PCB_STATES     	 	state;
-	uint32_t 		 	programCounter;
-	uint32_t *			startOfStack;
-	uint32_t *			endOfStack;
-	uint32_t		 	stackSize;
-	CORE_REGISTERS	 	registers;
-	USER_PROCESS_PTR 	process;
-	void *			 	nextPCB_ptr;
-}PCB;
-
+void DisableContext(void);
+void EnableContext(void);
 void KernalTask(void);
-void ForceContextSwitch(void);
 BOOL TimeToContextSwitch(void);
 void vTaskSwitchContext(void);
 

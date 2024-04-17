@@ -32,7 +32,6 @@ void FIFO_Init(void)
 		fifo[i].outputCounter = 0;
 		fifo[i].FIFO_Ptr = NULL;
 	}
-	printf("FIFO_Init - Passed\n");
 }
 
 //*****************************************************************************

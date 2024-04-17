@@ -6,14 +6,12 @@
  */
 
 #include "Mutex.h"
+#include "KernalThread.h"
 
-typedef struct _MUTEX_
-{
-	BOOL locked;
-	uint32_t muxId;
-} MUTEX;
+#define LOCKED   TRUE
+#define UNLOCKED FALSE
 
-static MUTEX myMutexes[MUTEX_NUMBER_OF_RESOURCES];
+static BOOL myMutexes[MUTEX_NUMBER_OF_RESOURCES];
 
 //*****************************************************************************
 // MutexInit
@@ -24,36 +22,61 @@ void MutexInit(void)
 
 	for(i = 0; i < MUTEX_NUMBER_OF_RESOURCES; i++)
 	{
-		myMutexes[i].locked = FALSE;
-		myMutexes[i].muxId = 0;
+		myMutexes[i] = UNLOCKED;
 	}
-	printf("MutexInit - Passed\n");
 }
 
 //*****************************************************************************
-// MutexWait
+// MutexLock
 //*****************************************************************************
-void MutexWait(RESOURCES resource)
+BOOL MutexLock(RESOURCES resource)
 {
-	while(myMutexes[resource].locked == TRUE);
-	myMutexes[resource].locked = TRUE;
+	if(resource >= MUTEX_NUMBER_OF_RESOURCES)
+	{
+		return FALSE;
+	}
+	if(myMutexes[resource] == LOCKED)
+	{
+		return FALSE;
+	}
+	myMutexes[resource] = LOCKED;
+
+	return TRUE;
 }
 
 //*****************************************************************************
-//* MutexWaitTime
+// MutexSpinLock
 //*****************************************************************************
-BOOL MutexWaitTime(RESOURCES resource, uint32_t timer_ms)
+BOOL MutexSpinLock(RESOURCES resource)
 {
+	if(resource >= MUTEX_NUMBER_OF_RESOURCES)
+	{
+		return FALSE;
+	}
+	while(myMutexes[resource] == LOCKED);
+	myMutexes[resource] = LOCKED;
+
+	return TRUE;
+}
+
+//*****************************************************************************
+//* MutexTimeLock
+//*****************************************************************************
+BOOL MutexTimeLock(RESOURCES resource, uint32_t timer_ms)
+{
+	if(resource >= MUTEX_NUMBER_OF_RESOURCES)
+	{
+		return FALSE;
+	}
 	uint32_t timeout = HAL_GetTick() + timer_ms;
-
-	while(myMutexes[resource].locked == TRUE)
+	while(myMutexes[resource] == LOCKED)
 	{
 		if(timeout < HAL_GetTick())
 		{
 			return FALSE;
 		}
 	}
-	myMutexes[resource].locked = TRUE;
+	myMutexes[resource] = LOCKED;
 
 	return TRUE;
 }
@@ -61,9 +84,15 @@ BOOL MutexWaitTime(RESOURCES resource, uint32_t timer_ms)
 //*****************************************************************************
 //* MutexRelease
 //*****************************************************************************
-void MutexRelease(RESOURCES resource)
+BOOL MutexRelease(RESOURCES resource)
 {
-	myMutexes[resource].locked = FALSE;
+	if(resource >= MUTEX_NUMBER_OF_RESOURCES)
+	{
+		return FALSE;
+	}
+	myMutexes[resource] = UNLOCKED;
+
+	return TRUE;
 }
 
 // EOF

@@ -182,7 +182,6 @@ void DebugMon_Handler(void)
 void PendSV_Handler(void)
 {
   /* USER CODE BEGIN PendSV_IRQn 0 */
-
     /* This is a naked function. */
     __asm volatile
         (
@@ -228,7 +227,6 @@ void PendSV_Handler(void)
         "pxCurrentTCBConst: .word pxCurrentTCB  \n"
         ::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
     );
-
   /* USER CODE END PendSV_IRQn 0 */
   /* USER CODE BEGIN PendSV_IRQn 1 */
 
@@ -251,7 +249,7 @@ void SysTick_Handler(void)
   if(TimeToContextSwitch() == TRUE)
   {
 	  //trigger PendSV
-	  HAL_NVIC_SetPendingIRQ(PendSV_IRQn);
+	  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
   }
   //Enable interrupts
   __enable_irq();

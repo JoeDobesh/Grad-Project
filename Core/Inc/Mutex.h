@@ -19,13 +19,16 @@ typedef enum _RESOURCES_
 	MUTEX_DISK = 0,
 	MUTEX_MODBUS,
 	MUTEX_DEBUG,
+	MUTEX_SERVER,
+	MUTEX_PRINT,
 	MUTEX_NUMBER_OF_RESOURCES,
 }RESOURCES;
 
 void MutexInit(void);
-void MutexWait(RESOURCES);
-BOOL MutexWaitTime(RESOURCES, uint32_t);
-void MutexRelease(RESOURCES);
+BOOL MutexLock(RESOURCES);
+BOOL MutexSpinLock(RESOURCES);
+BOOL MutexTimeLock(RESOURCES, uint32_t);
+BOOL MutexRelease(RESOURCES);
 
 #ifdef __cplusplus
 }

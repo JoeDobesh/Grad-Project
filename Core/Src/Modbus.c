@@ -151,6 +151,7 @@ static MSG_STRUCT sendMsg;
 static MSG_STRUCT rcvMsg;
 static BOOL messageReceived;
 static uint16_t holdingRegister;
+static BOOL busBusy;
 
 //*****************************************************************************
 // ModbusInit
@@ -159,6 +160,7 @@ void ModbusInit(void)
 {
 	TIMER_PARAMS timerParams;
 
+	busBusy = FALSE;
 	writeState = IDLE;
 	readState = 0;
 	messageReceived = FALSE;
@@ -177,10 +179,6 @@ void ModbusInit(void)
 	if ( readTimerId == 0 )
 	{
 		printf("Modbus Init - Failed: Registering Read Timer");
-	}
-	else
-	{
-		printf("Modbus Init - Passed\n");
 	}
 }
 
@@ -388,194 +386,194 @@ void ModbusTask(void)
 }
 
 //*****************************************************************************
-// ModbusPollTask
+// ModbusPollSensorTask
 //*****************************************************************************
-void ModbusPollTask(void)
+void ModbusPollSensorTask(void)
 {
 	uint8_t inByte;
 	uint8_t * ch = &inByte;
 	static EXCEPTION_CODES exception;
 	static uint8_t dataCounter;
+	static BOOL exit = FALSE;
 
-	switch(readState)
+	while(exit == FALSE)
 	{
-	case IDLE:
-		RS485GetString(ch, 1);
-		if(CheckTimer(readTimerId) == TRUE)
+		switch(readState)
 		{
-			if(ReadHoldingRegisters(0, 7, 0x01) == TRUE)
+		case IDLE:
+			RS485GetString(ch, 1);
+			if(CheckTimer(readTimerId) == TRUE)
 			{
-				if(ModbusSend() == TRUE)
+				if(ReadHoldingRegisters(0, 7, 0x01) == TRUE)
 				{
-					StartTimer(readTimerId, RESPONSE_TIMEOUT);
+					if(ModbusSend() == TRUE)
+					{
+						StartTimer(readTimerId, RESPONSE_TIMEOUT);
+						readState++;
+					}
+					else
+					{
+						StartTimer(readTimerId, POLL_TIMEOUT);
+					}
+				}
+			}
+			break;
+		case WAIT:
+			if(CheckTimer(readTimerId) == TRUE)
+			{
+				exception = TimeoutError;
+				readState = EXCEPTION;
+			}
+			else if(RS485GetString(ch, 1) == TRUE)
+			{
+				rcvMsg.addr = *ch;
+				if(rcvMsg.addr == sendMsg.addr)
+				{
 					readState++;
 				}
-				else
+				StartTimer(readTimerId, RESPONSE_TIMEOUT);
+			}
+			break;
+		case FUNCTION_CODE:
+			if(CheckTimer(readTimerId) == TRUE)
+			{
+				exception = TimeoutError;
+				readState = EXCEPTION;
+			}
+			else if(RS485GetString(ch, 1) == TRUE)
+			{
+				rcvMsg.msgType = *ch;
+				if((rcvMsg.msgType & EXCEPTION_MASK) == EXCEPTION_MASK)
 				{
-					StartTimer(readTimerId, POLL_TIMEOUT);
+					exception = *ch;
+					readState = EXCEPTION;
 				}
-			}
-		}
-		break;
-	case WAIT:
-		if(CheckTimer(readTimerId) == TRUE)
-		{
-			exception = TimeoutError;
-			readState = EXCEPTION;
-		}
-		else if(RS485GetString(ch, 1) == TRUE)
-		{
-			rcvMsg.addr = *ch;
-			if(rcvMsg.addr == sendMsg.addr)
-			{
-				readState++;
-			}
-			StartTimer(readTimerId, RESPONSE_TIMEOUT);
-		}
-		break;
-	case FUNCTION_CODE:
-		if(CheckTimer(readTimerId) == TRUE)
-		{
-			exception = TimeoutError;
-			readState = EXCEPTION;
-		}
-		else if(RS485GetString(ch, 1) == TRUE)
-		{
-			rcvMsg.msgType = *ch;
-			if((rcvMsg.msgType & EXCEPTION_MASK) == EXCEPTION_MASK)
-			{
-				exception = *ch;
-				readState = EXCEPTION;
-			}
-			else if(rcvMsg.msgType != sendMsg.msgType)
-			{
-				exception = InvalidFunctionCode;
-				readState = EXCEPTION;
-			}
-			else if(rcvMsg.msgType >= TOTAL_FUCNTION_CODES)
-			{
-				exception = InvalidFunctionCode;
-				readState = EXCEPTION;
-			}
-			else
-			{
-				if(rxFunctionPtrTable[rcvMsg.msgType]() == TRUE)
-				{
-					dataCounter = 0;
-					readState = CRC_CRC;
-					StartTimer(readTimerId, RESPONSE_TIMEOUT);
-				}
-				else
+				else if(rcvMsg.msgType != sendMsg.msgType)
 				{
 					exception = InvalidFunctionCode;
 					readState = EXCEPTION;
 				}
+				else if(rcvMsg.msgType >= TOTAL_FUCNTION_CODES)
+				{
+					exception = InvalidFunctionCode;
+					readState = EXCEPTION;
+				}
+				else
+				{
+					if(rxFunctionPtrTable[rcvMsg.msgType]() == TRUE)
+					{
+						dataCounter = 0;
+						readState = CRC_CRC;
+						StartTimer(readTimerId, RESPONSE_TIMEOUT);
+					}
+					else
+					{
+						exception = InvalidFunctionCode;
+						readState = EXCEPTION;
+					}
+				}
 			}
-		}
-		break;
-	case CRC_CRC:
-		if (CheckTimer(readTimerId) == TRUE)
-		{
-			exception = TimeoutError;
-			readState = EXCEPTION;
-		}
-		else if(RS485GetString(ch, 1) == TRUE)
-		{
-			rcvMsg.crc |= ((uint16_t)(*ch)) << (dataCounter * 8);
-			dataCounter++;
-			if(dataCounter > 1)
+			break;
+		case CRC_CRC:
+			if (CheckTimer(readTimerId) == TRUE)
 			{
-				readState = IDLE;
-				StartTimer(readTimerId, POLL_TIMEOUT);
+				exception = TimeoutError;
+				readState = EXCEPTION;
 			}
-			else
+			else if(RS485GetString(ch, 1) == TRUE)
 			{
-				StartTimer(readTimerId, RESPONSE_TIMEOUT);
+				rcvMsg.crc |= ((uint16_t)(*ch)) << (dataCounter * 8);
+				dataCounter++;
+				if(dataCounter > 1)
+				{
+					readState = IDLE;
+					StartTimer(readTimerId, POLL_TIMEOUT);
+				}
+				else
+				{
+					StartTimer(readTimerId, RESPONSE_TIMEOUT);
+				}
 			}
-		}
-		break;
-	case EXCEPTION:
-		RS485GetString(ch, 1);
-		switch(exception)
-		{
-		case TimeoutError:
-			printf ("Modbus::ModbusPollTask - Timeout Error\r\n");
 			break;
-		case InvalidFunctionCode:
-			printf ("Modbus::ModbusPollTask - Invalid Function Code\r\n");
-			break;
-		case InvalidDataAddress:
-			printf ("Modbus::ModbusPollTask - Invalid Data Address\r\n");
-			break;
-		case InvalidDataValue:
-			printf ("Modbus::ModbusPollTask - Invalid Data Value\r\n");
-			break;
-		case DeviceFailure:
-			printf ("Modbus::ModbusPollTask - Device Failure\r\n");
+		case EXCEPTION:
+			RS485GetString(ch, 1);
+			switch(exception)
+			{
+			case TimeoutError:
+				printf ("Modbus::ModbusPollTask - Timeout Error\r\n");
+				break;
+			case InvalidFunctionCode:
+				printf ("Modbus::ModbusPollTask - Invalid Function Code\r\n");
+				break;
+			case InvalidDataAddress:
+				printf ("Modbus::ModbusPollTask - Invalid Data Address\r\n");
+				break;
+			case InvalidDataValue:
+				printf ("Modbus::ModbusPollTask - Invalid Data Value\r\n");
+				break;
+			case DeviceFailure:
+				printf ("Modbus::ModbusPollTask - Device Failure\r\n");
+				break;
+			default:
+				break;
+			}
+			readState = IDLE;
+			StartTimer(readTimerId, POLL_TIMEOUT);
 			break;
 		default:
+			readState = IDLE;
+			StartTimer(readTimerId, POLL_TIMEOUT);
 			break;
 		}
-		readState = IDLE;
-		StartTimer(readTimerId, POLL_TIMEOUT);
-		break;
-	default:
-		readState = IDLE;
-		StartTimer(readTimerId, POLL_TIMEOUT);
-		break;
 	}
 }
 //*****************************************************************************
 // ReadCoils - 1
 //*****************************************************************************
-BOOL ReadCoils(uint16_t start, uint16_t num, uint8_t addr)
-{
+//BOOL ReadCoils(uint16_t start, uint16_t num, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = READ_COILS;
-	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
-	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-	sendMsg.txDataSize = 4;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = READ_COILS;
+//	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
+//	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
+//	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
+//	sendMsg.txDataSize = 4;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // ReadDescreteInputs - 2
 //*****************************************************************************
-BOOL ReadDescreteInputs(uint16_t start, uint16_t num, uint8_t addr)
-{
+//BOOL ReadDescreteInputs(uint16_t start, uint16_t num, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = READ_DESCRETE_INPUTS;
-	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
-	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-	sendMsg.txDataSize = 4;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = READ_DESCRETE_INPUTS;
+//	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
+//	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
+//	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
+//	sendMsg.txDataSize = 4;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // ReadHoldingRegisters - 3
 //*****************************************************************************
 BOOL ReadHoldingRegisters(uint16_t start, uint16_t num, uint8_t addr)
 {
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
 	sendMsg.addr       = addr;
 	sendMsg.msgType    = READ_HOLDING_REGISTERS;
 	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
@@ -591,44 +589,44 @@ BOOL ReadHoldingRegisters(uint16_t start, uint16_t num, uint8_t addr)
 //*****************************************************************************
 // ReadInputRegisters - 4
 //*****************************************************************************
-BOOL ReadInputRegisters(uint16_t start, uint16_t num, uint8_t addr)
-{
+//BOOL ReadInputRegisters(uint16_t start, uint16_t num, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = READ_INPUT_REGISTER;
-	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
-	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-	sendMsg.txDataSize = 4;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = READ_INPUT_REGISTER;
+//	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
+//	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
+//	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
+//	sendMsg.txDataSize = 4;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // WriteSingleCoil - 5
 //*****************************************************************************
-BOOL WriteSingleCoil(uint16_t address, uint16_t value, uint8_t addr)
-{
+//BOOL WriteSingleCoil(uint16_t address, uint16_t value, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = WRITE_SINGLE_COIL;
-	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-	sendMsg.data[2]    = (uint8_t)((value >> 8) & 0x00FF);
-	sendMsg.data[3]    = (uint8_t)(value & 0x00FF);;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-	sendMsg.txDataSize = 4;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = WRITE_SINGLE_COIL;
+//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
+//	sendMsg.data[2]    = (uint8_t)((value >> 8) & 0x00FF);
+//	sendMsg.data[3]    = (uint8_t)(value & 0x00FF);;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
+//	sendMsg.txDataSize = 4;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // WriteSingleRegister - 6
@@ -654,241 +652,241 @@ BOOL WriteSingleRegister(uint16_t address, uint16_t value, uint8_t addr)
 //*****************************************************************************
 // ReadExceptionStatus - 7
 //*****************************************************************************
-BOOL ReadExceptionStatus(uint8_t addr)
-{
+//BOOL ReadExceptionStatus(uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = READ_EXCEPTION_STATUS;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-	sendMsg.txDataSize = 0;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = READ_EXCEPTION_STATUS;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
+//	sendMsg.txDataSize = 0;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // Diagnostic - 8
 //*****************************************************************************
-BOOL Diagnostic(uint16_t sub, uint16_t num, uint8_t addr)
-{
-	uint8_t ii;
+//BOOL Diagnostic(uint16_t sub, uint16_t num, uint8_t addr)
+//{
+//	uint8_t ii;
 
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = DIAGNOSTIC;
-	sendMsg.data[0]    = (uint8_t)((sub >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(sub & 0x00FF);
-	for(ii = 0; ii < sub; ii++)
-	{
-		sendMsg.data[ii]    = 0;
-	}
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-	sendMsg.txDataSize = sub + 4;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = DIAGNOSTIC;
+//	sendMsg.data[0]    = (uint8_t)((sub >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(sub & 0x00FF);
+//	for(ii = 0; ii < sub; ii++)
+//	{
+//		sendMsg.data[ii]    = 0;
+//	}
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
+//	sendMsg.txDataSize = sub + 4;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // GetComEventCounter - 11
 //*****************************************************************************
-BOOL GetComEventCounter(uint8_t addr)
-{
+//BOOL GetComEventCounter(uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = GET_COM_EVENT_COUNTER;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-	sendMsg.txDataSize = 0;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = GET_COM_EVENT_COUNTER;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
+//	sendMsg.txDataSize = 0;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // GetComEventLog - 12
 //*****************************************************************************
-BOOL GetComEventLog(uint8_t addr)
-{
+//BOOL GetComEventLog(uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = GET_COM_EVENT_LOG;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-	sendMsg.txDataSize = 4;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = GET_COM_EVENT_LOG;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
+//	sendMsg.txDataSize = 4;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // WriteMultipleCoils - 15
 //*****************************************************************************
-BOOL WriteMultipleCoils(uint16_t address, uint16_t quantity, uint8_t count, uint8_t addr)
-{
+//BOOL WriteMultipleCoils(uint16_t address, uint16_t quantity, uint8_t count, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = WRITE_MULTIPLE_COILS;
-	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-	sendMsg.data[2]    = (uint8_t)((quantity >> 8) & 0x00FF);
-	sendMsg.data[3]    = (uint8_t)(quantity & 0x00FF);
-	sendMsg.data[4]    = count;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 7);
-	sendMsg.txDataSize = 5;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = WRITE_MULTIPLE_COILS;
+//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
+//	sendMsg.data[2]    = (uint8_t)((quantity >> 8) & 0x00FF);
+//	sendMsg.data[3]    = (uint8_t)(quantity & 0x00FF);
+//	sendMsg.data[4]    = count;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 7);
+//	sendMsg.txDataSize = 5;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // WriteMultipleRegisters - 16
 //*****************************************************************************
-BOOL WriteMultipleRegisters(uint16_t address, uint16_t quantity, uint8_t count, uint8_t addr)
-{
+//BOOL WriteMultipleRegisters(uint16_t address, uint16_t quantity, uint8_t count, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = WRITE_MULTIPLE_REGISTERS;
-	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-	sendMsg.data[2]    = (uint8_t)((quantity >> 8) & 0x00FF);
-	sendMsg.data[3]    = (uint8_t)(quantity & 0x00FF);
-	sendMsg.data[4]    = count;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 7);
-	sendMsg.txDataSize = 5;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = WRITE_MULTIPLE_REGISTERS;
+//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
+//	sendMsg.data[2]    = (uint8_t)((quantity >> 8) & 0x00FF);
+//	sendMsg.data[3]    = (uint8_t)(quantity & 0x00FF);
+//	sendMsg.data[4]    = count;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 7);
+//	sendMsg.txDataSize = 5;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // ReportSlaveID - 17
 //*****************************************************************************
-BOOL ReportSlaveID(uint8_t addr)
-{
+//BOOL ReportSlaveID(uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = REPORT_SLAVE_ID;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-	sendMsg.txDataSize = 0;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = REPORT_SLAVE_ID;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
+//	sendMsg.txDataSize = 0;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // ReadFileRecord - 20
 //*****************************************************************************
-BOOL ReadFileRecord(uint8_t count, uint8_t addr)
-{
+//BOOL ReadFileRecord(uint8_t count, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = READ_FILE_RECORD;
-	sendMsg.data[0]    = count;
-	sendMsg.data[1]    = 0x06;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = READ_FILE_RECORD;
+//	sendMsg.data[0]    = count;
+//	sendMsg.data[1]    = 0x06;
 	//sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
 	//sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 4);
-	sendMsg.txDataSize = 2;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 4);
+//	sendMsg.txDataSize = 2;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // WriteFileRecord - 21
 //*****************************************************************************
-BOOL WriteFileRecord(uint8_t addr)
-{
+//BOOL WriteFileRecord(uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = WRITE_FILE_RECORD;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-	sendMsg.txDataSize = 0;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = WRITE_FILE_RECORD;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
+//	sendMsg.txDataSize = 0;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // MaskWriteRegister - 22
 //*****************************************************************************
-BOOL MaskWriteRegister(uint16_t address, uint16_t andMask, uint16_t orMask, uint8_t addr)
-{
+//BOOL MaskWriteRegister(uint16_t address, uint16_t andMask, uint16_t orMask, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = MASK_WRITE_REGISTER;
-	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-	sendMsg.data[2]    = (uint8_t)((andMask >> 8) & 0x00FF);
-	sendMsg.data[3]    = (uint8_t)(andMask & 0x00FF);
-	sendMsg.data[4]    = (uint8_t)((orMask >> 8) & 0x00FF);
-	sendMsg.data[5]    = (uint8_t)(orMask & 0x00FF);;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 8);
-	sendMsg.txDataSize = 6;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = MASK_WRITE_REGISTER;
+//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
+//	sendMsg.data[2]    = (uint8_t)((andMask >> 8) & 0x00FF);
+//	sendMsg.data[3]    = (uint8_t)(andMask & 0x00FF);
+//	sendMsg.data[4]    = (uint8_t)((orMask >> 8) & 0x00FF);
+//	sendMsg.data[5]    = (uint8_t)(orMask & 0x00FF);;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 8);
+//	sendMsg.txDataSize = 6;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // ReadWriteMultipleRegisters - 23
 //*****************************************************************************
-BOOL ReadWriteMultipleRegisters(uint8_t addr)
-{
+//BOOL ReadWriteMultipleRegisters(uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = READ_WRITE_MULTIPLE_REGISTERS;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = READ_WRITE_MULTIPLE_REGISTERS;
 	//sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
 	//sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
 	//sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
 	//sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-	sendMsg.txDataSize = 4;
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
+//	sendMsg.txDataSize = 4;
 	//sendMsg.rxDataSize = 2 + (2 * num);
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // ReadFifoQueue - 24
 //*****************************************************************************
-BOOL ReadFifoQueue(uint16_t address, uint8_t addr)
-{
+//BOOL ReadFifoQueue(uint16_t address, uint8_t addr)
+//{
 	//if(state != IDLE)
 	//{
 	//	return FALSE;
 	//}
-	sendMsg.addr       = addr;
-	sendMsg.msgType    = READ_FIFO_QUEUE;
-	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 4);
-	sendMsg.txDataSize = 2;
+//	sendMsg.addr       = addr;
+//	sendMsg.msgType    = READ_FIFO_QUEUE;
+//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
+//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
+//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 4);
+//	sendMsg.txDataSize = 2;
 
-	return ModbusSend();
-}
+//	return ModbusSend();
+//}
 
 //*****************************************************************************
 // RxReadCoils - 1

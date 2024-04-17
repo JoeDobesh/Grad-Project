@@ -7,9 +7,11 @@ extern "C" {
 
 #include "Globals.h"
 
-#define HEARTBEAT_STACK_SIZE 100
+#define HEARTBEAT_STACK_SIZE   4095
+#define HEARTBEAT_STACK_SIZE_2 4095
 
 void HeartbeatTask(void);
+void HeartbeatTask2(void);
 
 #ifdef __cplusplus
 }
