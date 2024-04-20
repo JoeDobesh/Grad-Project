@@ -15,7 +15,6 @@ extern SPI_HandleTypeDef hspi1;
 BOOL SPI_Init(void)
 {
 	SPI_CS_High();
-	printf("SPI_Init Passed\n");
 
 	return TRUE;
 }

@@ -59,8 +59,8 @@ typedef struct tskTaskControlBlock
 
 } tskTCB;
 
-void DisableContext(void);
-void EnableContext(void);
+//void DisableContext(void);
+//void EnableContext(void);
 void KernalTask(void);
 BOOL TimeToContextSwitch(void);
 void vTaskSwitchContext(void);

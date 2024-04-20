@@ -1,2 +1,2 @@
-../Core/Src/HeartbeatTask.c:23:6:HeartbeatTask	8	static
-../Core/Src/HeartbeatTask.c:58:6:HeartbeatTask2	8	static
+../Core/Src/HeartbeatTask.c:39:6:HeartbeatTask	8	static
+../Core/Src/HeartbeatTask.c:74:6:HeartbeatTask2	8	static

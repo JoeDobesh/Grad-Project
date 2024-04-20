@@ -8,6 +8,7 @@
 #include "HeartbeatTask.h"
 #include "Globals.h"
 #include "main.h"
+#include "KernalThread.h"
 
 #define FLASH_TIME_MS 1000
 
@@ -17,6 +18,21 @@ STATES heartbeatTaskState1;
 STATES heartbeatTaskState2;
 uint32_t timeout1;
 uint32_t timeout2;
+
+//*****************************************************************************
+// GetTicks
+//*****************************************************************************
+//static uint32_t GetTicks(void)
+//{
+//	uint32_t ticks;
+
+	//__disable_irq();
+//	ticks = HAL_GetTick();
+	//__enable_irq();
+
+//	return ticks;
+//}
+
 //*****************************************************************************
 // HeartbeatTask
 //*****************************************************************************

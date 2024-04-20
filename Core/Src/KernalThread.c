@@ -31,10 +31,11 @@
 
 #define TASK_NAME_SIZE 			32
 #define SYSTICK_VALUE_MS 		10
-#define STACK_ALIGNMENT_MASK	0x00000007
-#define INITIAL_XPSR			0x01000000
-#define INITIAL_EXEC_RETURN 	0xFFFFFFFD
-#define portTASK_RETURN_ADDRESS NULL
+#define STACK_ALIGNMENT_MASK	(0x00000007)
+#define START_ADDRESS_MASK		(0xFFFFFFFE)
+#define INITIAL_XPSR			(0x01000000)
+#define INITIAL_EXEC_RETURN 	(0xFFFFFFFD)
+#define TASK_RETURN_ADDRESS 	Oopsy
 #define SERVER_TASK_STACK_SIZE	4096
 
 extern struct netif gnetif;
@@ -65,7 +66,7 @@ typedef struct _QUEUES_
 static QUEUE readyQueue;
 PCB * pxCurrentTCB;
 static uint32_t quantumCounter = 0;
-static BOOL csDisable = TRUE;
+//static BOOL csDisable = TRUE;
 static uint32_t serverStack[SERVER_TASK_STACK_SIZE];
 //*****************************************************************************
 // ServerTask
@@ -79,28 +80,37 @@ static void ServerTask(void)
 //*****************************************************************************
 // DisableContext
 //*****************************************************************************
-void DisableContext(void)
+//void DisableContext(void)
+//{
+//	csDisable = TRUE;
+//}
+
+//*****************************************************************************
+// Oopsy
+//*****************************************************************************
+static void Oopsy(void)
 {
-	csDisable = TRUE;
+	printf("Illegal Task Return\n");
+	for(;;);
 }
 
 //*****************************************************************************
 // EnableContext
 //*****************************************************************************
-void EnableContext(void)
-{
-	csDisable = FALSE;
-}
+//void EnableContext(void)
+//{
+//	csDisable = FALSE;
+//}
 
 //*****************************************************************************
 // TimeToContextSwitch
 //*****************************************************************************
 BOOL TimeToContextSwitch(void)
 {
-	if(csDisable == TRUE)
-	{
-		return FALSE;
-	}
+	//if(csDisable == TRUE)
+	//{
+	//	return FALSE;
+	//}
 	quantumCounter++;
 	if(quantumCounter >= SYSTICK_VALUE_MS)
 	{
@@ -164,7 +174,7 @@ static BOOL PushLastPCB(PCB * pcb)
 //*****************************************************************************
 // InitialiseStack
 //*****************************************************************************
-static uint32_t * InitialiseStack( uint32_t * topOfStack, USER_PROCESS_PTR functionPtr) //, void *pvParameters )
+static volatile uint32_t * InitialiseStack( volatile uint32_t * topOfStack, USER_PROCESS_PTR functionPtr) //, void *pvParameters )
 {
 	//Simulate the stack frame as it would be created by a context switch interrupt.
 	//Offset added to account for the way the MCU uses the stack on entry/exit of interrupts,
@@ -172,16 +182,16 @@ static uint32_t * InitialiseStack( uint32_t * topOfStack, USER_PROCESS_PTR funct
 	topOfStack--;
 	*topOfStack = INITIAL_XPSR;									// xPSR
 	topOfStack--;
-	*topOfStack = (uint32_t)functionPtr;						// PC (R15)
+	*topOfStack = ((uint32_t)functionPtr) & START_ADDRESS_MASK;	// PC (R15)
 	topOfStack--;
-	*topOfStack = (uint32_t)portTASK_RETURN_ADDRESS;			// LR (R14)
+	*topOfStack = (uint32_t)TASK_RETURN_ADDRESS;				// LR (R14)
 	// Save code space by skipping register initialisation.
 	topOfStack -= 5;											// R12 (IP), R3, R2 and R1.
 	//*pxTopOfStack = pvParameters;								// R0 (Not used)
 	// A save method is being used that requires each task to maintain its own exec return value.
 	topOfStack--;
 	*topOfStack = INITIAL_EXEC_RETURN;
-	topOfStack -= 8;	// R11, R10, R9, R8, R7, R6, R5 and R4.
+	topOfStack -= 8;											// R11, R10, R9, R8, R7, R6, R5 and R4.
 
 	return topOfStack;
 }
@@ -228,8 +238,7 @@ void vTaskSwitchContext(void)
 {
 	PCB * tempPCB;
 
-	__disable_irq();
-	csDisable = TRUE;
+	//csDisable = TRUE;
 	tempPCB = pxCurrentTCB;
 	if ( tempPCB != NULL )
 	{
@@ -244,8 +253,7 @@ void vTaskSwitchContext(void)
 		pxCurrentTCB = tempPCB;
 	}
 	quantumCounter = 0;
-	csDisable = FALSE;
-    __enable_irq();
+	//csDisable = FALSE;
 }
 
 //*****************************************************************************
@@ -253,7 +261,7 @@ void vTaskSwitchContext(void)
 //*****************************************************************************
 static void KernalThreadInit(void)
 {
-	csDisable                    = TRUE;
+	//csDisable                    = TRUE;
 	readyQueue.firstPCB_ptr      = NULL;
 	readyQueue.lastPCB_ptr       = NULL;
 	pxCurrentTCB                 = NULL;
@@ -298,9 +306,8 @@ static void KernalThreadInit(void)
 //*****************************************************************************
 void KernalTask(void)
 {
-	BOOL exit = FALSE;
-
-	csDisable = TRUE;
+	//csDisable = TRUE;
+	__disable_irq();
 	SoftTimerInit();
 	MutexInit();
 	FIFO_Init();
@@ -311,15 +318,13 @@ void KernalTask(void)
 	RS485Init();
 	ModbusInit();
 	PowerControlInit();
+	//__disable_irq();
 	KernalThreadInit();
 	quantumCounter = 0;
-	csDisable = FALSE;
-	while(exit == FALSE)
-	{
-		//ethernetif_input(&gnetif);
-		//sys_check_timeouts();
-	}
-	csDisable = TRUE;
+	//csDisable = FALSE;
+	__enable_irq();
+	while(1){;}
+	//csDisable = TRUE;
 }
 
 // EOF

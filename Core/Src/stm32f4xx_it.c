@@ -182,6 +182,8 @@ void DebugMon_Handler(void)
 void PendSV_Handler(void)
 {
   /* USER CODE BEGIN PendSV_IRQn 0 */
+	//Disable interrupts
+	__disable_irq();
     /* This is a naked function. */
     __asm volatile
         (
@@ -229,7 +231,8 @@ void PendSV_Handler(void)
     );
   /* USER CODE END PendSV_IRQn 0 */
   /* USER CODE BEGIN PendSV_IRQn 1 */
-
+  //Disable interrupts
+  __enable_irq();
   /* USER CODE END PendSV_IRQn 1 */
 }
 
@@ -239,13 +242,12 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-
+  //Disable interrupts
+  __disable_irq();
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-
-  //Disable interrupts
-  __disable_irq();
+  //__disable_irq();
   if(TimeToContextSwitch() == TRUE)
   {
 	  //trigger PendSV
@@ -253,7 +255,6 @@ void SysTick_Handler(void)
   }
   //Enable interrupts
   __enable_irq();
-
   /* USER CODE END SysTick_IRQn 1 */
 }
 
