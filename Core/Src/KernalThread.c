@@ -66,7 +66,6 @@ typedef struct _QUEUES_
 static QUEUE readyQueue;
 PCB * pxCurrentTCB;
 static uint32_t quantumCounter = 0;
-//static BOOL csDisable = TRUE;
 static uint32_t serverStack[SERVER_TASK_STACK_SIZE];
 //*****************************************************************************
 // ServerTask
@@ -78,14 +77,6 @@ static void ServerTask(void)
 }
 
 //*****************************************************************************
-// DisableContext
-//*****************************************************************************
-//void DisableContext(void)
-//{
-//	csDisable = TRUE;
-//}
-
-//*****************************************************************************
 // Oopsy
 //*****************************************************************************
 static void Oopsy(void)
@@ -95,22 +86,10 @@ static void Oopsy(void)
 }
 
 //*****************************************************************************
-// EnableContext
-//*****************************************************************************
-//void EnableContext(void)
-//{
-//	csDisable = FALSE;
-//}
-
-//*****************************************************************************
 // TimeToContextSwitch
 //*****************************************************************************
 BOOL TimeToContextSwitch(void)
 {
-	//if(csDisable == TRUE)
-	//{
-	//	return FALSE;
-	//}
 	quantumCounter++;
 	if(quantumCounter >= SYSTICK_VALUE_MS)
 	{
@@ -238,7 +217,6 @@ void vTaskSwitchContext(void)
 {
 	PCB * tempPCB;
 
-	//csDisable = TRUE;
 	tempPCB = pxCurrentTCB;
 	if ( tempPCB != NULL )
 	{
@@ -253,7 +231,6 @@ void vTaskSwitchContext(void)
 		pxCurrentTCB = tempPCB;
 	}
 	quantumCounter = 0;
-	//csDisable = FALSE;
 }
 
 //*****************************************************************************
@@ -261,7 +238,6 @@ void vTaskSwitchContext(void)
 //*****************************************************************************
 static void KernalThreadInit(void)
 {
-	//csDisable                    = TRUE;
 	readyQueue.firstPCB_ptr      = NULL;
 	readyQueue.lastPCB_ptr       = NULL;
 	pxCurrentTCB                 = NULL;
@@ -306,7 +282,6 @@ static void KernalThreadInit(void)
 //*****************************************************************************
 void KernalTask(void)
 {
-	//csDisable = TRUE;
 	__disable_irq();
 	SoftTimerInit();
 	MutexInit();
@@ -321,10 +296,8 @@ void KernalTask(void)
 	//__disable_irq();
 	KernalThreadInit();
 	quantumCounter = 0;
-	//csDisable = FALSE;
 	__enable_irq();
 	while(1){;}
-	//csDisable = TRUE;
 }
 
 // EOF

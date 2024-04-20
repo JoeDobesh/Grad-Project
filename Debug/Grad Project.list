@@ -29,23 +29,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  12 .ARM.attributes 00000030  00000000  00000000  000b00b0  2**0
                   CONTENTS, READONLY
- 13 .debug_info   0002d59c  00000000  00000000  000b00e0  2**0
+ 13 .debug_info   0002d59b  00000000  00000000  000b00e0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_abbrev 00007c07  00000000  00000000  000dd67c  2**0
+ 14 .debug_abbrev 00007bef  00000000  00000000  000dd67b  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_aranges 000022d0  00000000  00000000  000e5288  2**3
+ 15 .debug_aranges 000022d0  00000000  00000000  000e5270  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_ranges 000020f0  00000000  00000000  000e7558  2**3
+ 16 .debug_ranges 000020f0  00000000  00000000  000e7540  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_macro  00013eca  00000000  00000000  000e9648  2**0
+ 17 .debug_macro  00013eca  00000000  00000000  000e9630  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line   0003a45d  00000000  00000000  000fd512  2**0
+ 18 .debug_line   0003a45d  00000000  00000000  000fd4fa  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    000fa3d3  00000000  00000000  0013796f  2**0
+ 19 .debug_str    000fa3d3  00000000  00000000  00137957  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .comment      00000050  00000000  00000000  00231d42  2**0
+ 20 .comment      00000050  00000000  00000000  00231d2a  2**0
                   CONTENTS, READONLY
- 21 .debug_frame  000097b0  00000000  00000000  00231d94  2**2
+ 21 .debug_frame  000097b0  00000000  00000000  00231d7c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -747,10 +747,6 @@ BOOL TimeToContextSwitch(void)
 {
  80007a4:	b480      	push	{r7}
  80007a6:	af00      	add	r7, sp, #0
-	//if(csDisable == TRUE)
-	//{
-	//	return FALSE;
-	//}
 	quantumCounter++;
  80007a8:	4b09      	ldr	r3, [pc, #36]	; (80007d0 <TimeToContextSwitch+0x2c>)
  80007aa:	681b      	ldr	r3, [r3, #0]
@@ -1113,7 +1109,6 @@ void vTaskSwitchContext(void)
  8000994:	af00      	add	r7, sp, #0
 	PCB * tempPCB;
 
-	//csDisable = TRUE;
 	tempPCB = pxCurrentTCB;
  8000996:	4b0f      	ldr	r3, [pc, #60]	; (80009d4 <vTaskSwitchContext+0x44>)
  8000998:	681b      	ldr	r3, [r3, #0]
@@ -1152,7 +1147,6 @@ void vTaskSwitchContext(void)
  80009c6:	4b05      	ldr	r3, [pc, #20]	; (80009dc <vTaskSwitchContext+0x4c>)
  80009c8:	2200      	movs	r2, #0
  80009ca:	601a      	str	r2, [r3, #0]
-	//csDisable = FALSE;
 }
  80009cc:	bf00      	nop
  80009ce:	3708      	adds	r7, #8
@@ -1171,7 +1165,6 @@ static void KernalThreadInit(void)
 {
  80009e0:	b580      	push	{r7, lr}
  80009e2:	af00      	add	r7, sp, #0
-	//csDisable                    = TRUE;
 	readyQueue.firstPCB_ptr      = NULL;
  80009e4:	4b12      	ldr	r3, [pc, #72]	; (8000a30 <KernalThreadInit+0x50>)
  80009e6:	2200      	movs	r2, #0
@@ -1249,7 +1242,6 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8000a5c:	b672      	cpsid	i
 }
  8000a5e:	bf00      	nop
-	//csDisable = TRUE;
 	__disable_irq();
 	SoftTimerInit();
  8000a60:	f000 f912 	bl	8000c88 <SoftTimerInit>
@@ -1282,7 +1274,6 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8000a92:	b662      	cpsie	i
 }
  8000a94:	bf00      	nop
-	//csDisable = FALSE;
 	__enable_irq();
 	while(1){;}
  8000a96:	e7fe      	b.n	8000a96 <KernalTask+0x3e>
