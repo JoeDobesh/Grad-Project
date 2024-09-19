@@ -32,13 +32,14 @@ Core/Src/KernalThread.o: ../Core/Src/KernalThread.c ../Core/Inc/Globals.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/main.h ../Core/Inc/FIFO.h ../Core/Inc/Globals.h \
  ../Core/Inc/KernalThread.h ../Core/Inc/CommandPrompt.h \
- ../Core/Inc/HeartbeatTask.h ../Core/Inc/SoftTimers.h \
- ../Core/Inc/MailBag.h ../Core/Inc/RealTimeClock.h \
- ../Core/Inc/Network/http_ssi.h ../Core/Inc/Network/http_cgi.h \
- ../Core/Inc/Disk/SPI.h ../Core/Inc/Disk/SD_Card.h \
- ../Core/Inc/Disk/FATSystem.h ../Core/Inc/Disk/Boot.h \
- ../Core/Inc/Disk/SD_Card.h ../Core/Inc/RS485.h ../Core/Inc/Modbus.h \
- ../Core/Inc/Mutex.h ../Core/Inc/Event.h ../LWIP/App/lwip.h \
+ ../Core/Inc/HeartbeatTask.h ../Core/Inc/KernalThread.h \
+ ../Core/Inc/SoftTimers.h ../Core/Inc/MailBag.h \
+ ../Core/Inc/RealTimeClock.h ../Core/Inc/Network/http_ssi.h \
+ ../Core/Inc/Network/http_cgi.h ../Core/Inc/Disk\SPI.h \
+ ../Core/Inc/Disk\SD_Card.h ../Core/Inc/Disk\FATSystem.h \
+ ../Core/Inc/Disk\Boot.h ../Core/Inc/Disk\SD_Card.h ../Core/Inc/RS485.h \
+ ../Core/Inc/Modbus.h ../Core/Inc/Mutex.h ../Core/Inc/Event.h \
+ ../LWIP/App/lwip.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/opt.h \
  ../LWIP/Target/lwipopts.h ../Core/Inc/main.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/debug.h \
@@ -115,16 +116,17 @@ Core/Src/KernalThread.o: ../Core/Src/KernalThread.c ../Core/Inc/Globals.h \
 ../Core/Inc/KernalThread.h:
 ../Core/Inc/CommandPrompt.h:
 ../Core/Inc/HeartbeatTask.h:
+../Core/Inc/KernalThread.h:
 ../Core/Inc/SoftTimers.h:
 ../Core/Inc/MailBag.h:
 ../Core/Inc/RealTimeClock.h:
 ../Core/Inc/Network/http_ssi.h:
 ../Core/Inc/Network/http_cgi.h:
-../Core/Inc/Disk/SPI.h:
-../Core/Inc/Disk/SD_Card.h:
-../Core/Inc/Disk/FATSystem.h:
-../Core/Inc/Disk/Boot.h:
-../Core/Inc/Disk/SD_Card.h:
+../Core/Inc/Disk\SPI.h:
+../Core/Inc/Disk\SD_Card.h:
+../Core/Inc/Disk\FATSystem.h:
+../Core/Inc/Disk\Boot.h:
+../Core/Inc/Disk\SD_Card.h:
 ../Core/Inc/RS485.h:
 ../Core/Inc/Modbus.h:
 ../Core/Inc/Mutex.h:

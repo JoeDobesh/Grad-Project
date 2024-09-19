@@ -5,10 +5,10 @@
  *      Author: joe.dobesh
  */
 
-#include "SD_Card.h"
-#include "SPI.h"
+#include "Disk\SD_Card.h"
+#include "Disk\SPI.h"
 #include "SoftTimers.h"
-#include "Boot.h"
+#include "Disk/Boot.h"
 
 #define NODATA    0
 #define MOREDATA !NODATA

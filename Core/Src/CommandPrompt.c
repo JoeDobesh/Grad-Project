@@ -10,9 +10,9 @@
 #include "CommandPrompt.h"
 #include "SoftTimers.h"
 #include "Modbus.h"
-#include "Boot.h"
-#include "Directories.h"
-#include "FileSystem.h"
+#include "Disk\Boot.h"
+#include "Disk\Directories.h"
+#include "Disk\FileSystem.h"
 #include "UserApps/PowerControlTask.h"
 
 #define INPUT_BUFFER_SIZE 256

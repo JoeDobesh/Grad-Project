@@ -8,62 +8,34 @@
 #include "HeartbeatTask.h"
 #include "Globals.h"
 #include "main.h"
-#include "KernalThread.h"
+#include "SoftTimers.h"
+#include "Mutex.h"
 
 #define FLASH_TIME_MS 1000
 
-uint32_t heartbeatStack[HEARTBEAT_STACK_SIZE];
+uint32_t heartbeatStack1[HEARTBEAT_STACK_SIZE_1];
 uint32_t heartbeatStack2[HEARTBEAT_STACK_SIZE_2];
-STATES heartbeatTaskState1;
-STATES heartbeatTaskState2;
-uint32_t timeout1;
-uint32_t timeout2;
+
+PCB heartbeatPCB1;
+PCB heartbeatPCB2;
 
 //*****************************************************************************
-// GetTicks
+// HeartbeatTask1
 //*****************************************************************************
-//static uint32_t GetTicks(void)
-//{
-//	uint32_t ticks;
-
-	//__disable_irq();
-//	ticks = HAL_GetTick();
-	//__enable_irq();
-
-//	return ticks;
-//}
-
-//*****************************************************************************
-// HeartbeatTask
-//*****************************************************************************
-void HeartbeatTask(void)
+void HeartbeatTask1(void)
 {
-	heartbeatTaskState1 = stateZero;
+	static uint32_t timeout1;
+	uint32_t tickCount;
+
+	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 1);
 	timeout1 = HAL_GetTick() + FLASH_TIME_MS;
-	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 0);
 	while(TRUE)
 	{
-		switch(heartbeatTaskState1)
+		tickCount = HAL_GetTick();
+		if (tickCount > timeout1)
 		{
-		case stateZero:
-			if (timeout1 < HAL_GetTick() )
-			{
-				HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 1);
-				timeout1 = HAL_GetTick() + FLASH_TIME_MS;
-				heartbeatTaskState1++;
-			}
-			break;
-		case stateOne:
-			if (timeout1 <  HAL_GetTick())
-			{
-				HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 0);
-				timeout1 = HAL_GetTick() + FLASH_TIME_MS;
-				heartbeatTaskState1--;
-			}
-			break;
-		default:
-			heartbeatTaskState1 = stateZero;
-			break;
+			timeout1 = tickCount + FLASH_TIME_MS;
+			HAL_GPIO_TogglePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin);
 		}
 	}
 }
@@ -73,32 +45,18 @@ void HeartbeatTask(void)
 //*****************************************************************************
 void HeartbeatTask2(void)
 {
-	heartbeatTaskState2 = stateZero;
+	static uint32_t timeout2;
+	uint32_t tickCount;
+
+	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Blue_Test_LED_Pin, 1);
 	timeout2 = HAL_GetTick() + FLASH_TIME_MS;
-	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Blue_Test_LED_Pin, 0);
-	while(1)
+	while(TRUE)
 	{
-		switch(heartbeatTaskState2)
+		tickCount = HAL_GetTick();
+		if (tickCount > timeout2)
 		{
-		case stateZero:
-			if (timeout2 < HAL_GetTick() )
-			{
-				HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Blue_Test_LED_Pin, 1);
-				timeout2 = HAL_GetTick() + FLASH_TIME_MS;
-				heartbeatTaskState2++;
-			}
-			break;
-		case stateOne:
-			if (timeout2 <  HAL_GetTick())
-			{
-				HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Blue_Test_LED_Pin, 0);
-				timeout2 = HAL_GetTick() + FLASH_TIME_MS;
-				heartbeatTaskState2--;
-			}
-			break;
-		default:
-			heartbeatTaskState2 = stateZero;
-			break;
+			timeout2 = tickCount + FLASH_TIME_MS;
+			HAL_GPIO_TogglePin(Heartbeat_LED_GPIO_Port, Blue_Test_LED_Pin);
 		}
 	}
 }

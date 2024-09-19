@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "Globals.h"
 #include "KernalThread.h"
+#include "Mutex.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,12 +44,24 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define EXCEPTION_RETURN() \
+{ \
+	if ( CONTROL.FPCA == 1) \
+	{ \
+		LR = HANDLER_MODE_MAIN_EXT; \
+		LR = THREAD_MODE_PROCESS_EXT ; \
+	} \
+	else \
+	{ \
+		LR = HANDLER_MODE_MAIN_BASIC; \
+		LR = THREAD_MODE_PROCESS_BASIC; \
+	} \
+}
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern uint32_t * pxCurrentTCB;
+extern PCB * volatile pCurrentTCB;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,6 +82,25 @@ extern DMA_HandleTypeDef hdma_uart4_rx;
 extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
+#define SetInterruptMask() \
+    __asm volatile \
+        ( \
+        " mov r0, %0      \n" \
+        " msr basepri, r0 \n" \
+        : \
+        :"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY) \
+        :"r0" \
+        )
+
+#define ClearInterruptMask() \
+    __asm volatile \
+        ( \
+        " mov r0, #0      \n" \
+        " msr basepri, r0 \n" \
+        : \
+        : \
+        :"r0" \
+        )
 
 /* USER CODE END EV */
 
@@ -182,57 +214,53 @@ void DebugMon_Handler(void)
 void PendSV_Handler(void)
 {
   /* USER CODE BEGIN PendSV_IRQn 0 */
-	//Disable interrupts
-	__disable_irq();
+	//printf("Entering PendSV_Handler\n");
     /* This is a naked function. */
     __asm volatile
         (
-        "       mrs r0, psp                     \n" /* load previous stack into r0 */
+        "       mrs r0, psp                     \n" /* move previous stack pointer into r0 */
         "       isb                             \n" /* flush instruction pipeline */
         "                                       \n"
-        "       ldr     r3, pxCurrentTCBConst   \n" /* Get the location of the current TCB and load the pointer into r3. */
-        "       ldr     r2, [r3]                \n" /* load the first TCB intem value into r2, Should be a uint32_t pointer */
+        "       ldr     r3, pCurrentTCBConst    \n" /* Get the location of the current TCB and load the pointer into r3. */
+        "       ldr     r2, [r3]                \n" /* load the first TCB item value into r2, Should be a uint32_t pointer (pTopOfStack)*/
         "                                       \n"
-        "       tst r14, #0x10                  \n" /* Is the task using the FPU context?  If so, push high vfp registers. */
-        "       it eq                           \n" /* FPU - Floating point Unit */
-        "       vstmdbeq r0!, {s16-s31}         \n"
+        "       tst lr, #0x10                   \n" /* Is the task using the FPU context? */
+        "       it eq                           \n"
+        "       vstmdbeq r0!, {s16-s31}         \n" /* If so, push high vfp registers. May not work in thumb2 mode*/
         "                                       \n"
         "       stmdb r0!, {r4-r11, r14}        \n" /* Save the core registers. */
         "       str r0, [r2]                    \n" /* Save the new top of stack into the first member of the TCB. */
         "                                       \n"
-        "       stmdb sp!, {r0, r3}             \n"
+        "       stmdb sp!, {r0, r3}             \n" /* store the first two items of the stack onto r0 and r3 */
         "       mov r0, %0                      \n"
-        "       msr basepri, r0                 \n"
-        "       dsb                             \n"
-        "       isb                             \n"
-        "       bl vTaskSwitchContext           \n"
-        "       mov r0, #0                      \n" /* Start New Task */
-        "       msr basepri, r0                 \n"
-        "       ldmia sp!, {r0, r3}             \n"
+        "       msr basepri, r0                 \n" /* disable interrupts */
+        "       dsb                             \n" /* complete all memory actions */
+        "       isb                             \n" /* clear pipeline */
+        "       bl vTaskSwitchContext           \n" /* Call Context Switcher */
+        "       mov r0, #0                      \n" /* Clear r0 */
+        "       msr basepri, r0                 \n" /* enable interrupts */
+        "       ldmia sp!, {r0, r3}             \n" /* load r0 and r3 back onto the stack */
         "                                       \n"
         "       ldr r1, [r3]                    \n" /* The first item in pxCurrentTCB is the task top of stack. */
         "       ldr r0, [r1]                    \n"
         "                                       \n"
         "       ldmia r0!, {r4-r11, r14}        \n" /* Pop the core registers. */
         "                                       \n"
-        "       tst r14, #0x10                  \n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
+        "       tst lr, #0x10                   \n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
         "       it eq                           \n"
         "       vldmiaeq r0!, {s16-s31}         \n"
         "                                       \n"
-        "       msr psp, r0                     \n"
-        "       isb                             \n"
+        "       msr psp, r0                     \n" /* load the new top of stack onto PSP */
+        "       isb                             \n" /* flush instruction pipeline */
         "                                       \n"
-        "                                       \n"
-        "       bx r14                          \n"
+        "       bx lr                           \n" /* jump to next task */
         "                                       \n"
         "       .align 4                        \n"
-        "pxCurrentTCBConst: .word pxCurrentTCB  \n"
+        "pCurrentTCBConst: .word pCurrentTCB    \n"
         ::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
     );
   /* USER CODE END PendSV_IRQn 0 */
   /* USER CODE BEGIN PendSV_IRQn 1 */
-  //Disable interrupts
-  __enable_irq();
   /* USER CODE END PendSV_IRQn 1 */
 }
 
@@ -242,12 +270,10 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-  //Disable interrupts
   __disable_irq();
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-  //__disable_irq();
   if(TimeToContextSwitch() == TRUE)
   {
 	  //trigger PendSV

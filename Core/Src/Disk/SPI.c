@@ -5,7 +5,7 @@
  *      Author: joe.dobesh
  */
 
-#include "SPI.h"
+#include "Disk\SPI.h"
 
 extern SPI_HandleTypeDef hspi1;
 

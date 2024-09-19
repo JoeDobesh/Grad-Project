@@ -14,50 +14,19 @@ extern "C" {
 
 #include "Globals.h"
 
-typedef struct tskTaskControlBlock
+#define HANDLER_MODE_MAIN_EXT		(0xFFFFFFE1)
+#define THREAD_MODE_MAIN_EXT		(0xFFFFFFE9)
+#define THREAD_MODE_PROCESS_EXT		(0xFFFFFFED)
+#define HANDLER_MODE_MAIN_BASIC		(0xFFFFFFF1)
+#define THREAD_MODE_MAIN_BASIC		(0xFFFFFFF9)
+#define THREAD_MODE_PROCESS_BASIC	(0xFFFFFFFD)
+
+typedef struct _PCB_
 {
-//  volatile portSTACK_TYPE *pxTopOfStack;
-															/* Points to the location of
-                                                             the last item placed on
-                                                             the tasks stack.  THIS
-                                                             MUST BE THE FIRST MEMBER
-                                                             OF THE STRUCT. */
-
-//  xListItem    xGenericListItem;
-															/* List item used to place
-                                                             the TCB in ready and
-                                                             blocked queues. */
-//  xListItem    xEventListItem;
-															/* List item used to place
-                                                             the TCB in event lists.*/
-//  unsigned portBASE_TYPE uxPriority;
-															/* The priority of the task
-                                                             where 0 is the lowest
-                                                             priority. */
-//  portSTACK_TYPE *pxStack;
-															/* Points to the start of
-                                                             the stack. */
-//  signed char    pcTaskName[ configMAX_TASK_NAME_LEN ];
-															/* Descriptive name given
-                                                             to the task when created.
-                                                             Facilitates debugging
-                                                             only. */
-
-  #if ( portSTACK_GROWTH > 0 )
-    portSTACK_TYPE *pxEndOfStack;                         /* Used for stack overflow
-                                                             checking on architectures
-                                                             where the stack grows up
-                                                             from low memory. */
-  #endif
-
-  #if ( configUSE_MUTEXES == 1 )
-    unsigned portBASE_TYPE uxBasePriority;                /* The priority last
-                                                             assigned to the task -
-                                                             used by the priority
-                                                             inheritance mechanism. */
-  #endif
-
-} tskTCB;
+	volatile uint32_t * pTopOfStack;
+	uint32_t * pStackLimit;
+	volatile void     *	nextPCB_ptr;
+}PCB;
 
 void KernalTask(void);
 BOOL TimeToContextSwitch(void);

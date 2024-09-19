@@ -1,5 +1,5 @@
 Core/Src/Disk/FATSystem.o: ../Core/Src/Disk/FATSystem.c \
- ../Core/Inc/Disk/FATSystem.h ../Core/Inc/Globals.h \
+ ../Core/Inc/Disk\FATSystem.h ../Core/Inc/Globals.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -31,8 +31,8 @@ Core/Src/Disk/FATSystem.o: ../Core/Src/Disk/FATSystem.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/main.h ../Core/Inc/Disk/Boot.h ../Core/Inc/Disk/SD_Card.h
-../Core/Inc/Disk/FATSystem.h:
+ ../Core/Inc/main.h ../Core/Inc/Disk\Boot.h ../Core/Inc/Disk\SD_Card.h
+../Core/Inc/Disk\FATSystem.h:
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -66,5 +66,5 @@ Core/Src/Disk/FATSystem.o: ../Core/Src/Disk/FATSystem.c \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/main.h:
-../Core/Inc/Disk/Boot.h:
-../Core/Inc/Disk/SD_Card.h:
+../Core/Inc/Disk\Boot.h:
+../Core/Inc/Disk\SD_Card.h:

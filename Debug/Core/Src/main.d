@@ -62,7 +62,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/dhcp.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/timeouts.h \
  ../LWIP/Target/ethernetif.h ../Core/Inc/KernalThread.h \
- ../Core/Inc/Globals.h ../Core/Inc/main.h ../Core/Inc/Disk/SPI.h \
+ ../Core/Inc/Globals.h ../Core/Inc/main.h ../Core/Inc/Disk\SPI.h \
  ../Core/Inc/Globals.h ../Core/Inc/SoftTimers.h ../Core/Inc/RS485.h \
  ../Core/Inc/UserApps/PowerControlTask.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/apps/httpd.h \
@@ -135,7 +135,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/KernalThread.h:
 ../Core/Inc/Globals.h:
 ../Core/Inc/main.h:
-../Core/Inc/Disk/SPI.h:
+../Core/Inc/Disk\SPI.h:
 ../Core/Inc/Globals.h:
 ../Core/Inc/SoftTimers.h:
 ../Core/Inc/RS485.h:

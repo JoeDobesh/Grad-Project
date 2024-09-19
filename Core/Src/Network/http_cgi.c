@@ -9,8 +9,8 @@
 #include "UserApps/PowerControlTask.h"
 #include "UserApps/SwitchPowerTask.h"
 #include "UserApps/CrossingTask.h"
-#include "http_cgi.h"
-#include "lwip/tcp.h"
+#include "Network/http_cgi.h"
+#include "tcp.h"
 #include "lwip/apps/httpd.h"
 
 const char *CGISpeedHandler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);

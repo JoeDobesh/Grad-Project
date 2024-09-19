@@ -6,7 +6,7 @@
  */
 
 #include "Globals.h"
-#include "http_ssi.h"
+#include "Network\http_ssi.h"
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"

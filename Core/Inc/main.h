@@ -111,6 +111,7 @@ void Error_Handler(void);
 #define RMII_TXD0_GPIO_Port GPIOG
 #define Blue_Test_LED_Pin GPIO_PIN_7
 #define Blue_Test_LED_GPIO_Port GPIOB
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

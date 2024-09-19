@@ -1,4 +1,4 @@
-Core/Src/Disk/SPI.o: ../Core/Src/Disk/SPI.c ../Core/Inc/Disk/SPI.h \
+Core/Src/Disk/SPI.o: ../Core/Src/Disk/SPI.c ../Core/Inc/Disk\SPI.h \
  ../Core/Inc/Globals.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
@@ -32,7 +32,7 @@ Core/Src/Disk/SPI.o: ../Core/Src/Disk/SPI.c ../Core/Inc/Disk/SPI.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/main.h
-../Core/Inc/Disk/SPI.h:
+../Core/Inc/Disk\SPI.h:
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:

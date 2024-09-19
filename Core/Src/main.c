@@ -23,7 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "KernalThread.h"
-#include "SPI.h"
+#include "Disk\SPI.h"
 #include "SoftTimers.h"
 #include "RS485.h"
 #include "UserApps/PowerControlTask.h"
@@ -126,6 +126,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
 	}
 	if (htim == &htim3)
 	{
+
 		TimerInterrupt();
 	}
 }
@@ -153,6 +154,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -182,13 +184,13 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_SPI1_Init();
-  MX_LWIP_Init();
   MX_TIM2_Init();
+  MX_LWIP_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim4);
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-  HAL_TIM_Base_Start_IT(&htim3);
-  httpd_init();
+  //HAL_TIM_Base_Start_IT(&htim4);
+  //HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+  //HAL_TIM_Base_Start_IT(&htim3);
+  //httpd_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -551,6 +553,8 @@ static void MX_DMA_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -626,6 +630,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(RS485_REN_DEN_GPIO_Port, &GPIO_InitStruct);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */

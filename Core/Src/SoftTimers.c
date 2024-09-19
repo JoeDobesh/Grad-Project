@@ -8,6 +8,7 @@
 #include "SoftTimers.h"
 #include "main.h"
 #include "KernalThread.h"
+#include "Mutex.h"
 
 #define TIMER_SIZE 8
 #define TIMER_STACK_SIZE 1000

@@ -5,7 +5,7 @@
  *      Author: joe.dobesh
  */
 
-#include "Directories.h"
+#include "Disk\Directories.h"
 
 #define DIR_ENTRY_SIZE				32
 #define DIR_ENTRIES_PER_SECTOR()	(SDC_SECTOR_SIZE/DIR_ENTRY_SIZE)

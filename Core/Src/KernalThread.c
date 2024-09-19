@@ -15,9 +15,9 @@
 #include "RealTimeClock.h"
 #include "Network/http_ssi.h"
 #include "Network/http_cgi.h"
-#include "SPI.h"
-#include "SD_Card.h"
-#include "FATSystem.h"
+#include "Disk\SPI.h"
+#include "Disk\SD_Card.h"
+#include "Disk\FATSystem.h"
 #include "RS485.h"
 #include "Modbus.h"
 #include "Mutex.h"
@@ -29,18 +29,18 @@
 #include "UserApps/CrossingTask.h"
 #include "UserApps/SwitchPowerTask.h"
 
-#define TASK_NAME_SIZE 			32
-#define SYSTICK_VALUE_MS 		10
-#define STACK_ALIGNMENT_MASK	(0x00000007)
-#define START_ADDRESS_MASK		(0xFFFFFFFE)
-#define INITIAL_XPSR			(0x01000000)
-#define INITIAL_EXEC_RETURN 	(0xFFFFFFFD)
-#define TASK_RETURN_ADDRESS 	Oopsy
-#define SERVER_TASK_STACK_SIZE	4096
+#define TASK_NAME_SIZE 				32
+#define SYSTICK_VALUE_MS 			100
+#define STACK_ALIGNMENT_MASK		(0x00000007)
+#define START_ADDRESS_MASK			(0xFFFFFFFE)
+#define INITIAL_XPSR				(0x01000000)
+#define INITIAL_EXEC_RETURN 		THREAD_MODE_PROCESS_BASIC
+#define TASK_RETURN_ADDRESS 		Oopsy
+#define SERVER_TASK_STACK_SIZE		512
 
+extern __IO uint32_t uwTick;
+extern HAL_TickFreqTypeDef uwTickFreq;
 extern struct netif gnetif;
-extern uint32_t heartbeatStack[];
-extern uint32_t heartbeatStack2[];
 extern uint32_t mailbagStack[];
 extern uint32_t commandPromptStack[];
 extern uint32_t modbusStack[];
@@ -49,22 +49,15 @@ extern uint32_t crossingStack[];
 extern uint32_t crossoverStack[];
 
 typedef void (*USER_PROCESS_PTR)(void);
-typedef struct _PCB_
-{
-	volatile uint32_t * pTopOfStack;
-	uint32_t *			startOfStack;
-	char 			 	name[TASK_NAME_SIZE];
-	void *			 	nextPCB_ptr;
-}PCB;
-
 typedef struct _QUEUES_
 {
-	PCB *	firstPCB_ptr;
-	PCB *	lastPCB_ptr;
+	volatile PCB * firstPCB_ptr;
+	volatile PCB * lastPCB_ptr;
 } QUEUE;
 
+static BOOL enableSwitching = FALSE;
 static QUEUE readyQueue;
-PCB * pxCurrentTCB;
+volatile PCB * pCurrentTCB;
 static uint32_t quantumCounter = 0;
 static uint32_t serverStack[SERVER_TASK_STACK_SIZE];
 //*****************************************************************************
@@ -85,11 +78,30 @@ static void Oopsy(void)
 	for(;;);
 }
 
+void HAL_IncTick(void)
+{
+  uwTick += uwTickFreq;
+}
+
+uint32_t HAL_GetTick(void)
+{
+	//uint32_t retVal;
+	//if(MutexLock(MUTEX_GET_TICK) == TRUE)
+	//{
+		return uwTick;
+	//	MutexRelease(MUTEX_GET_TICK);
+	//}
+}
+
 //*****************************************************************************
 // TimeToContextSwitch
 //*****************************************************************************
 BOOL TimeToContextSwitch(void)
 {
+	if(enableSwitching == FALSE)
+	{
+		return FALSE;
+	}
 	quantumCounter++;
 	if(quantumCounter >= SYSTICK_VALUE_MS)
 	{
@@ -103,32 +115,30 @@ BOOL TimeToContextSwitch(void)
 //*****************************************************************************
 //* PopNextPCB
 //*****************************************************************************
-static BOOL PopNextPCB(PCB ** pcb)
+static volatile PCB * PopNextPCB(void)
 {
-	PCB * tempPCB = NULL;
+	volatile PCB * p_tempPCB = NULL;
 
 	if(readyQueue.firstPCB_ptr == NULL)
 	{
-		*pcb = NULL;
-		return FALSE;
+		return NULL;
 	}
-	tempPCB = readyQueue.firstPCB_ptr;
+	p_tempPCB = readyQueue.firstPCB_ptr;
 	readyQueue.firstPCB_ptr = readyQueue.firstPCB_ptr->nextPCB_ptr;
 	if(readyQueue.firstPCB_ptr == NULL)
 	{
 		readyQueue.lastPCB_ptr = NULL;
 	}
-	*pcb = tempPCB;
 
-	return TRUE;
+	return p_tempPCB;
 }
 
 //*****************************************************************************
 // PushLastPCB
 //*****************************************************************************
-static BOOL PushLastPCB(PCB * pcb)
+static BOOL PushLastPCB(volatile PCB * pcb)
 {
-	PCB * tempPCB = pcb;
+	volatile PCB * p_tempPCB = pcb;
 
 	if(pcb == NULL)
 	{
@@ -136,14 +146,14 @@ static BOOL PushLastPCB(PCB * pcb)
 	}
 	if(readyQueue.firstPCB_ptr == NULL)
 	{
-		readyQueue.firstPCB_ptr             = tempPCB;
-		readyQueue.lastPCB_ptr              = tempPCB;
+		readyQueue.firstPCB_ptr             = p_tempPCB;
+		readyQueue.lastPCB_ptr              = p_tempPCB;
 		readyQueue.lastPCB_ptr->nextPCB_ptr = NULL;
 	}
 	else
 	{
-		readyQueue.lastPCB_ptr->nextPCB_ptr = tempPCB;
-		readyQueue.lastPCB_ptr              = tempPCB;
+		readyQueue.lastPCB_ptr->nextPCB_ptr = p_tempPCB;
+		readyQueue.lastPCB_ptr              = p_tempPCB;
 		readyQueue.lastPCB_ptr->nextPCB_ptr = NULL;
 	}
 
@@ -153,7 +163,7 @@ static BOOL PushLastPCB(PCB * pcb)
 //*****************************************************************************
 // InitialiseStack
 //*****************************************************************************
-static volatile uint32_t * InitialiseStack( volatile uint32_t * topOfStack, USER_PROCESS_PTR functionPtr) //, void *pvParameters )
+static volatile uint32_t * InitialiseStack(volatile uint32_t * topOfStack, USER_PROCESS_PTR functionPtr) //, void *pvParameters )
 {
 	//Simulate the stack frame as it would be created by a context switch interrupt.
 	//Offset added to account for the way the MCU uses the stack on entry/exit of interrupts,
@@ -161,10 +171,10 @@ static volatile uint32_t * InitialiseStack( volatile uint32_t * topOfStack, USER
 	topOfStack--;
 	*topOfStack = INITIAL_XPSR;									// xPSR
 	topOfStack--;
-	*topOfStack = ((uint32_t)functionPtr) & START_ADDRESS_MASK;	// PC (R15)
+	*topOfStack = ((uint32_t)functionPtr); // & START_ADDRESS_MASK;	// PC (R15)
 	topOfStack--;
 	*topOfStack = (uint32_t)TASK_RETURN_ADDRESS;				// LR (R14)
-	// Save code space by skipping register initialisation.
+	// Save code space by skipping register initialization.
 	topOfStack -= 5;											// R12 (IP), R3, R2 and R1.
 	//*pxTopOfStack = pvParameters;								// R0 (Not used)
 	// A save method is being used that requires each task to maintain its own exec return value.
@@ -179,30 +189,25 @@ static volatile uint32_t * InitialiseStack( volatile uint32_t * topOfStack, USER
 // LoadProcess
 //*****************************************************************************
 static BOOL LoadProcess(void * process,
-						char * name,
 						uint32_t * stackPtr,
-						uint32_t stackSize)
+						PCB * pcb,
+						uint32_t stack_size)
 {
-	PCB * tempPCB = NULL;
-	uint32_t strLength;
+	uint32_t stackSize = stack_size;
 	uint32_t temp;
 
-	tempPCB = malloc(sizeof(PCB));
-	if ( tempPCB == NULL )
-	{
-		return FALSE;
-	}
-	memset(tempPCB->name, '\0', TASK_NAME_SIZE);
-	strLength = strlen(name);
-	strLength = (strLength <= TASK_NAME_SIZE)? strLength: TASK_NAME_SIZE;
-	memcpy(tempPCB->name, name, strLength);
-	tempPCB->name[TASK_NAME_SIZE - 1] = '\0';
-	tempPCB->nextPCB_ptr 	= NULL;
-	temp = ((uint32_t)stackPtr) + (stackSize - 1); //The STM32 stacks are a Full Descending Stacks
-	tempPCB->pTopOfStack = (uint32_t *)(temp & (~(uint32_t)STACK_ALIGNMENT_MASK)); //Make sure alignment is 64 bit
-	tempPCB->startOfStack 	= stackPtr; //by address
-	tempPCB->pTopOfStack = InitialiseStack(tempPCB->pTopOfStack, process);
-	if(PushLastPCB(tempPCB) == FALSE)
+	assert(process != NULL);
+	assert(stackPtr != NULL);
+	assert(pcb != NULL);
+
+	memset(stackPtr, 0x00, (stackSize * sizeof(uint32_t)));
+	pcb->nextPCB_ptr = NULL;
+	pcb->pStackLimit = stackPtr;
+	temp = (uint32_t)stackPtr + stackSize;
+	pcb->pTopOfStack = (uint32_t *)((temp/8)*8);
+	//pcb->pTopOfStack = (uint32_t *)((((uint32_t)stackPtr + stackSize)/8)*8);
+	pcb->pTopOfStack = InitialiseStack(pcb->pTopOfStack, process);
+	if(PushLastPCB(pcb) == FALSE)
 	{
 		return FALSE;
 	}
@@ -213,22 +218,23 @@ static BOOL LoadProcess(void * process,
 //*****************************************************************************
 // vTaskSwitchContext
 //*****************************************************************************
-void vTaskSwitchContext(void)
+void vTaskSwitchContext(void) //PRIVILEGED_FUNCTION
 {
-	PCB * tempPCB;
+	volatile PCB * p_tempPCB;
 
-	tempPCB = pxCurrentTCB;
-	if ( tempPCB != NULL )
+	p_tempPCB = pCurrentTCB;
+	if ( p_tempPCB != NULL )
 	{
-		PushLastPCB(tempPCB);
+		PushLastPCB(p_tempPCB);
 	}
-	if(PopNextPCB(&tempPCB) == FALSE)
+	p_tempPCB = PopNextPCB();
+	if(p_tempPCB == NULL)
 	{
 		printf("Kernal - Ready Queue Critical Pop Next Failure!\n");
 	}
 	else
 	{
-		pxCurrentTCB = tempPCB;
+		pCurrentTCB = p_tempPCB;
 	}
 	quantumCounter = 0;
 }
@@ -238,16 +244,18 @@ void vTaskSwitchContext(void)
 //*****************************************************************************
 static void KernalThreadInit(void)
 {
-	readyQueue.firstPCB_ptr      = NULL;
-	readyQueue.lastPCB_ptr       = NULL;
-	pxCurrentTCB                 = NULL;
-	if(LoadProcess(HeartbeatTask, "Heartbeat\n", heartbeatStack, HEARTBEAT_STACK_SIZE) == FALSE)
+	readyQueue.firstPCB_ptr = NULL;
+	readyQueue.lastPCB_ptr  = NULL;
+	pCurrentTCB             = NULL;
+	uint32_t localPSP;
+
+	if(LoadProcess(HeartbeatTask1, &heartbeatStack1[0], &heartbeatPCB1, HEARTBEAT_STACK_SIZE_1) == FALSE)
 	{
-		printf("Heartbeat Task Load Failure\n");
+		printf("Heartbeat 1 Task Load Failure\n");
 	}
-	if(LoadProcess(HeartbeatTask2, "Heartbeat2\n", heartbeatStack2, HEARTBEAT_STACK_SIZE_2) == FALSE)
+	if(LoadProcess(HeartbeatTask2, &heartbeatStack2[0], &heartbeatPCB2, HEARTBEAT_STACK_SIZE_2) == FALSE)
 	{
-		printf("Heartbeat2 Task Load Failure\n");
+		printf("Heartbeat 2 Task Load Failure\n");
 	}
 	/*
 	if(LoadProcess(MailbagTask, "Mailbag\n", mailbagStack, MAILBAG_STACK_SIZE) == FALSE)
@@ -275,6 +283,9 @@ static void KernalThreadInit(void)
 		printf("Crossover Task Load Failure\n");
 	}
 	*/
+	localPSP = (uint32_t)(&serverStack[SERVER_TASK_STACK_SIZE - 1]);
+	localPSP = (localPSP*8)/8;
+	__set_PSP(localPSP);
 }
 
 //*****************************************************************************
@@ -282,20 +293,22 @@ static void KernalThreadInit(void)
 //*****************************************************************************
 void KernalTask(void)
 {
-	__disable_irq();
-	SoftTimerInit();
-	MutexInit();
-	FIFO_Init();
-	SD_CardInit();
-	InitFAT();
-	HttpdSsiInit();
-	HttpdCgiInit();
-	RS485Init();
-	ModbusInit();
-	PowerControlInit();
+	//enableSwitching = FALSE;
 	//__disable_irq();
+	//SoftTimerInit();
+	MutexInit();
+	//FIFO_Init();
+	//SD_CardInit();
+	//InitFAT();
+	//HttpdSsiInit();
+	//HttpdCgiInit();
+	//RS485Init();
+	//ModbusInit();
+	//PowerControlInit();
+	__disable_irq();
 	KernalThreadInit();
 	quantumCounter = 0;
+	enableSwitching = TRUE;
 	__enable_irq();
 	while(1){;}
 }

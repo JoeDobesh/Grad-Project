@@ -6,11 +6,18 @@ extern "C" {
 #endif
 
 #include "Globals.h"
+#include "KernalThread.h"
 
-#define HEARTBEAT_STACK_SIZE   4095
-#define HEARTBEAT_STACK_SIZE_2 4095
+#define HEARTBEAT_STACK_SIZE_1 2048
+#define HEARTBEAT_STACK_SIZE_2 2048
 
-void HeartbeatTask(void);
+extern uint32_t heartbeatStack1[];
+extern uint32_t heartbeatStack2[];
+
+extern PCB heartbeatPCB1;
+extern PCB heartbeatPCB2;
+
+void HeartbeatTask1(void);
 void HeartbeatTask2(void);
 
 #ifdef __cplusplus
