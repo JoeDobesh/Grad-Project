@@ -80,17 +80,18 @@ static void Oopsy(void)
 
 void HAL_IncTick(void)
 {
-  uwTick += uwTickFreq;
+  //uwTick += uwTickFreq;
 }
 
 uint32_t HAL_GetTick(void)
 {
-	//uint32_t retVal;
-	//if(MutexLock(MUTEX_GET_TICK) == TRUE)
-	//{
-		return uwTick;
-	//	MutexRelease(MUTEX_GET_TICK);
-	//}
+	uint32_t retVal;
+
+	__disable_irq();
+	retVal = uwTick;
+	__enable_irq();
+
+	return retVal;
 }
 
 //*****************************************************************************
@@ -98,6 +99,8 @@ uint32_t HAL_GetTick(void)
 //*****************************************************************************
 BOOL TimeToContextSwitch(void)
 {
+	uwTick += uwTickFreq;
+
 	if(enableSwitching == FALSE)
 	{
 		return FALSE;

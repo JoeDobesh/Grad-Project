@@ -214,50 +214,75 @@ void DebugMon_Handler(void)
 void PendSV_Handler(void)
 {
   /* USER CODE BEGIN PendSV_IRQn 0 */
-	//printf("Entering PendSV_Handler\n");
     /* This is a naked function. */
     __asm volatile
         (
-        "       mrs r0, psp                     \n" /* move previous stack pointer into r0 */
+        "       cpsid f                         \n" /* disable interrupts */
+        "                                       \n"
+        "       tst lr, 0x04                    \n" /* test if we are in kernel or thread mode */
+        "       ite eq                          \n"
+        "       mrseq r0, msp                   \n"
+        "       mrsne r0, psp                   \n" /* move previous stack pointer into r0 */
         "       isb                             \n" /* flush instruction pipeline */
         "                                       \n"
-        "       ldr     r3, pCurrentTCBConst    \n" /* Get the location of the current TCB and load the pointer into r3. */
-        "       ldr     r2, [r3]                \n" /* load the first TCB item value into r2, Should be a uint32_t pointer (pTopOfStack)*/
-        "                                       \n"
-        "       tst lr, #0x10                   \n" /* Is the task using the FPU context? */
+        "       tst lr, 0x10                    \n" /* Is the task using the FPU context? */
         "       it eq                           \n"
         "       vstmdbeq r0!, {s16-s31}         \n" /* If so, push high vfp registers. May not work in thumb2 mode*/
         "                                       \n"
-        "       stmdb r0!, {r4-r11, r14}        \n" /* Save the core registers. */
+        "       stmdb r0!, {r4-r11, lr}         \n" /* Save the core registers. */
+        "                                       \n"
+        "       tst lr, 0x04                    \n"
+        "       it eq                           \n"
+        "       msreq msp, r0                   \n"
+        "                                       \n"
+        "       ldr     r1, =pCurrentTCBConst   \n" /* Get the location of the current TCB and load the pointer into r1. */
+        "       ldr     r2, [r1]                \n" /* load the first TCB item value into r2, Should be a uint32_t pointer (pTopOfStack)*/
         "       str r0, [r2]                    \n" /* Save the new top of stack into the first member of the TCB. */
         "                                       \n"
-        "       stmdb sp!, {r0, r3}             \n" /* store the first two items of the stack onto r0 and r3 */
-        "       mov r0, %0                      \n"
-        "       msr basepri, r0                 \n" /* disable interrupts */
-        "       dsb                             \n" /* complete all memory actions */
-        "       isb                             \n" /* clear pipeline */
-        "       bl vTaskSwitchContext           \n" /* Call Context Switcher */
-        "       mov r0, #0                      \n" /* Clear r0 */
-        "       msr basepri, r0                 \n" /* enable interrupts */
-        "       ldmia sp!, {r0, r3}             \n" /* load r0 and r3 back onto the stack */
+//        "       stmdb sp!, {r0, r3}             \n" /* store the first two items of the stack onto r0 and r3 */
+//        "       mov r0, %0                      \n"
+//        "       msr basepri, r0                 \n" /* disable interrupts */
+//        "       dsb                             \n" /* complete all memory actions */
+//        "       isb                             \n" /* clear pipeline */
         "                                       \n"
-        "       ldr r1, [r3]                    \n" /* The first item in pxCurrentTCB is the task top of stack. */
+        "       push {lr}                       \n"
+        "       bl vTaskSwitchContext           \n" /* Call Context Switcher */
+        "       pop {lr}                        \n"
+        "                                       \n"
+//        "       mov r0, #0                      \n" /* Clear r0 */
+//        "       msr basepri, r0                 \n" /* enable interrupts */
+//        "       ldmia sp!, {r0, r3}             \n" /* load r0 and r3 back onto the stack */
+        "                                       \n"
+        "       ldr r1, =pCurrentTCBConst       \n"
+        "       ldr r1, [r1]                    \n" /* The first item in pxCurrentTCB is the task top of stack. */
         "       ldr r0, [r1]                    \n"
         "                                       \n"
-        "       ldmia r0!, {r4-r11, r14}        \n" /* Pop the core registers. */
+        "       ldmia r0!, {r4-r11, lr}         \n" /* Pop the core registers. */
         "                                       \n"
-        "       tst lr, #0x10                   \n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
+        "       tst lr, 0x10                    \n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
         "       it eq                           \n"
         "       vldmiaeq r0!, {s16-s31}         \n"
         "                                       \n"
-        "       msr psp, r0                     \n" /* load the new top of stack onto PSP */
-        "       isb                             \n" /* flush instruction pipeline */
+        "       mrs r1, control                 \n"
+        "                                       \n"
+        "       tst lr, 0x04                    \n"
+        "       ittee eq                        \n"
+        "       biceq r1, 0x03                  \n"
+        "       msreq msp, r0                   \n"
+        "       orrne r1, 0x02                  \n"
+        "       msrne psp, r0                   \n" /* load the new top of stack onto PSP */
+        "                                       \n"
+        "       msr control, r1                 \n"
+        "                                       \n"
+        "       isb                             \n"
+        "                                       \n"
+        "       cpsie f                         \n"
         "                                       \n"
         "       bx lr                           \n" /* jump to next task */
         "                                       \n"
         "       .align 4                        \n"
         "pCurrentTCBConst: .word pCurrentTCB    \n"
-        ::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
+//        ::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
     );
   /* USER CODE END PendSV_IRQn 0 */
   /* USER CODE BEGIN PendSV_IRQn 1 */

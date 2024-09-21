@@ -27,6 +27,7 @@ Core/Src/Disk \
 Core/Src/Network \
 Core/Src/UserApps \
 Core/Startup \
+Core/ThreadSafe \
 Drivers/BSP/Components/lan8742 \
 Drivers/STM32F4xx_HAL_Driver/Src \
 LWIP/App \

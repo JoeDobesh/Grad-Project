@@ -21,6 +21,7 @@ RM := rm -rf
 -include LWIP/App/subdir.mk
 -include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Drivers/BSP/Components/lan8742/subdir.mk
+-include Core/ThreadSafe/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/UserApps/subdir.mk
 -include Core/Src/Network/subdir.mk
