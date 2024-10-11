@@ -188,7 +188,7 @@ int main(void)
   MX_LWIP_Init();
   /* USER CODE BEGIN 2 */
   //HAL_TIM_Base_Start_IT(&htim4);
-  //HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
   //HAL_TIM_Base_Start_IT(&htim3);
   //httpd_init();
   /* USER CODE END 2 */
@@ -197,6 +197,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  printf("Starting Kernel Task\n");
 	  KernalTask();
     /* USER CODE END WHILE */
 

@@ -34,12 +34,11 @@
 #define STACK_ALIGNMENT_MASK		(0x00000007)
 #define START_ADDRESS_MASK			(0xFFFFFFFE)
 #define INITIAL_XPSR				(0x01000000)
-#define INITIAL_EXEC_RETURN 		THREAD_MODE_PROCESS_BASIC
-#define TASK_RETURN_ADDRESS 		Oopsy
+#define TASK_RETURN_ADDRESS 		KernelTask;
 #define SERVER_TASK_STACK_SIZE		512
 
-extern __IO uint32_t uwTick;
-extern HAL_TickFreqTypeDef uwTickFreq;
+uint32_t interruptDisableCounter;
+
 extern struct netif gnetif;
 extern uint32_t mailbagStack[];
 extern uint32_t commandPromptStack[];
@@ -55,9 +54,11 @@ typedef struct _QUEUES_
 	volatile PCB * lastPCB_ptr;
 } QUEUE;
 
+PCB kernelPCB;
+uint32_t kernelStack[64];
 static BOOL enableSwitching = FALSE;
 static QUEUE readyQueue;
-volatile PCB * pCurrentTCB;
+volatile PCB * pCurrentPCB;
 static uint32_t quantumCounter = 0;
 static uint32_t serverStack[SERVER_TASK_STACK_SIZE];
 //*****************************************************************************
@@ -70,28 +71,12 @@ static void ServerTask(void)
 }
 
 //*****************************************************************************
-// Oopsy
+// KernelTask
 //*****************************************************************************
-static void Oopsy(void)
+void KernelTask(void)
 {
-	printf("Illegal Task Return\n");
+	printf("Entering Kernel Task\n");
 	for(;;);
-}
-
-void HAL_IncTick(void)
-{
-  //uwTick += uwTickFreq;
-}
-
-uint32_t HAL_GetTick(void)
-{
-	uint32_t retVal;
-
-	__disable_irq();
-	retVal = uwTick;
-	__enable_irq();
-
-	return retVal;
 }
 
 //*****************************************************************************
@@ -166,7 +151,7 @@ static BOOL PushLastPCB(volatile PCB * pcb)
 //*****************************************************************************
 // InitialiseStack
 //*****************************************************************************
-static volatile uint32_t * InitialiseStack(volatile uint32_t * topOfStack, USER_PROCESS_PTR functionPtr) //, void *pvParameters )
+static volatile uint32_t * InitialiseStack(volatile uint32_t * topOfStack, USER_PROCESS_PTR functionPtr)
 {
 	//Simulate the stack frame as it would be created by a context switch interrupt.
 	//Offset added to account for the way the MCU uses the stack on entry/exit of interrupts,
@@ -179,10 +164,9 @@ static volatile uint32_t * InitialiseStack(volatile uint32_t * topOfStack, USER_
 	*topOfStack = (uint32_t)TASK_RETURN_ADDRESS;				// LR (R14)
 	// Save code space by skipping register initialization.
 	topOfStack -= 5;											// R12 (IP), R3, R2 and R1.
-	//*pxTopOfStack = pvParameters;								// R0 (Not used)
 	// A save method is being used that requires each task to maintain its own exec return value.
 	topOfStack--;
-	*topOfStack = INITIAL_EXEC_RETURN;
+	*topOfStack = THREAD_MODE_PSP;
 	topOfStack -= 8;											// R11, R10, R9, R8, R7, R6, R5 and R4.
 
 	return topOfStack;
@@ -208,7 +192,6 @@ static BOOL LoadProcess(void * process,
 	pcb->pStackLimit = stackPtr;
 	temp = (uint32_t)stackPtr + stackSize;
 	pcb->pTopOfStack = (uint32_t *)((temp/8)*8);
-	//pcb->pTopOfStack = (uint32_t *)((((uint32_t)stackPtr + stackSize)/8)*8);
 	pcb->pTopOfStack = InitialiseStack(pcb->pTopOfStack, process);
 	if(PushLastPCB(pcb) == FALSE)
 	{
@@ -221,14 +204,15 @@ static BOOL LoadProcess(void * process,
 //*****************************************************************************
 // vTaskSwitchContext
 //*****************************************************************************
-void vTaskSwitchContext(void) //PRIVILEGED_FUNCTION
+void vTaskSwitchContext(void)
 {
 	volatile PCB * p_tempPCB;
 
-	p_tempPCB = pCurrentTCB;
-	if ( p_tempPCB != NULL )
+	p_tempPCB = &kernelPCB;
+	//if ( p_tempPCB != NULL )
+	if (p_tempPCB != pCurrentPCB)
 	{
-		PushLastPCB(p_tempPCB);
+		PushLastPCB(pCurrentPCB);
 	}
 	p_tempPCB = PopNextPCB();
 	if(p_tempPCB == NULL)
@@ -237,7 +221,7 @@ void vTaskSwitchContext(void) //PRIVILEGED_FUNCTION
 	}
 	else
 	{
-		pCurrentTCB = p_tempPCB;
+		pCurrentPCB = p_tempPCB;
 	}
 	quantumCounter = 0;
 }
@@ -249,8 +233,7 @@ static void KernalThreadInit(void)
 {
 	readyQueue.firstPCB_ptr = NULL;
 	readyQueue.lastPCB_ptr  = NULL;
-	pCurrentTCB             = NULL;
-	uint32_t localPSP;
+	volatile PCB * p_tempPCB = &kernelPCB;
 
 	if(LoadProcess(HeartbeatTask1, &heartbeatStack1[0], &heartbeatPCB1, HEARTBEAT_STACK_SIZE_1) == FALSE)
 	{
@@ -260,15 +243,11 @@ static void KernalThreadInit(void)
 	{
 		printf("Heartbeat 2 Task Load Failure\n");
 	}
+	//if(LoadProcess(CommandPrompt, "CommandPrompt\n", commandPromptStack, COMMAND_PROMPT_STACK_SIZE) == FALSE)
+	//{
+	//	printf("Command Prompt Task Load Failure\n");
+	//}
 	/*
-	if(LoadProcess(MailbagTask, "Mailbag\n", mailbagStack, MAILBAG_STACK_SIZE) == FALSE)
-	{
-		printf("Mailbag Task Load Failure\n");
-	}
-	if(LoadProcess(CommandPrompt, "CommandPrompt\n", commandPromptStack, COMMAND_PROMPT_STACK_SIZE) == FALSE)
-	{
-		printf("Command Prompt Task Load Failure\n");
-	}
 	if(LoadProcess(ServerTask, "Server\n", serverStack, SERVER_TASK_STACK_SIZE) == FALSE)
 	{
 		printf("Command Prompt Task Load Failure\n");
@@ -285,10 +264,17 @@ static void KernalThreadInit(void)
 	{
 		printf("Crossover Task Load Failure\n");
 	}
+	if(LoadProcess(MailbagTask, "Mailbag\n", mailbagStack, MAILBAG_STACK_SIZE) == FALSE)
+	{
+	/	printf("Mailbag Task Load Failure\n");
+	}
 	*/
-	localPSP = (uint32_t)(&serverStack[SERVER_TASK_STACK_SIZE - 1]);
-	localPSP = (localPSP*8)/8;
-	__set_PSP(localPSP);
+	memset(kernelStack, 0x00, (64 * sizeof(uint32_t)));
+	p_tempPCB->nextPCB_ptr = NULL;
+	p_tempPCB->pStackLimit = kernelStack;
+	uint32_t temp = (uint32_t)kernelStack + 64;
+	p_tempPCB->pTopOfStack = (uint32_t *)((temp/8)*8);
+	pCurrentPCB = p_tempPCB;
 }
 
 //*****************************************************************************
@@ -296,8 +282,8 @@ static void KernalThreadInit(void)
 //*****************************************************************************
 void KernalTask(void)
 {
-	//enableSwitching = FALSE;
-	//__disable_irq();
+	enableSwitching = FALSE;
+	DisableAllInterrupts();
 	//SoftTimerInit();
 	MutexInit();
 	//FIFO_Init();
@@ -308,11 +294,10 @@ void KernalTask(void)
 	//RS485Init();
 	//ModbusInit();
 	//PowerControlInit();
-	__disable_irq();
 	KernalThreadInit();
 	quantumCounter = 0;
 	enableSwitching = TRUE;
-	__enable_irq();
+	EnableAllInterrupts();
 	while(1){;}
 }
 

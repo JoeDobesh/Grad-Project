@@ -1,4 +1,4 @@
+../Core/Src/Network/http_cgi.c:39:13:CGISpeedHandler	24	static
+../Core/Src/Network/http_cgi.c:65:13:CGISwitchHandler	24	static
+../Core/Src/Network/http_cgi.c:91:13:CGICrossingHandler	24	static
 ../Core/Src/Network/http_cgi.c:28:6:HttpdCgiInit	8	static
-../Core/Src/Network/http_cgi.c:39:13:CGISpeedHandler	32	static
-../Core/Src/Network/http_cgi.c:65:13:CGISwitchHandler	32	static
-../Core/Src/Network/http_cgi.c:91:13:CGICrossingHandler	32	static

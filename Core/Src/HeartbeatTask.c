@@ -25,14 +25,14 @@ PCB heartbeatPCB2;
 void HeartbeatTask1(void)
 {
 	static uint32_t timeout1;
-	uint32_t tickCount;
+	volatile uint32_t tickCount;
 
 	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin, 1);
 	timeout1 = HAL_GetTick() + FLASH_TIME_MS;
 	while(TRUE)
 	{
 		tickCount = HAL_GetTick();
-		if (tickCount > timeout1)
+		if(tickCount > timeout1 )
 		{
 			timeout1 = tickCount + FLASH_TIME_MS;
 			HAL_GPIO_TogglePin(Heartbeat_LED_GPIO_Port, Heartbeat_LED_Pin);
@@ -46,9 +46,9 @@ void HeartbeatTask1(void)
 void HeartbeatTask2(void)
 {
 	static uint32_t timeout2;
-	uint32_t tickCount;
+	volatile uint32_t tickCount;
 
-	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Blue_Test_LED_Pin, 1);
+	HAL_GPIO_WritePin(Heartbeat_LED_GPIO_Port, Blue_Test_LED_Pin, 0);
 	timeout2 = HAL_GetTick() + FLASH_TIME_MS;
 	while(TRUE)
 	{

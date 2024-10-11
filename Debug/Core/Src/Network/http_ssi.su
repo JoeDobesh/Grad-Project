@@ -1,8 +1,8 @@
-../Core/Src/Network/http_ssi.c:32:6:HttpdSsiInit	8	static
-../Core/Src/Network/http_ssi.c:40:14:GetCrossingImage	16	static
+../Core/Src/Network/http_ssi.c:40:14:GetCrossingImage	8	static
 ../Core/Src/Network/http_ssi.c:105:14:GetCrossingStatus	8	static
-../Core/Src/Network/http_ssi.c:118:14:GetStreet	16	static
-../Core/Src/Network/http_ssi.c:143:14:GetCrossoverStatus	16	static
-../Core/Src/Network/http_ssi.c:167:10:SsiHandler	24	static
-../Core/Src/Network/http_ssi.c:198:6:NetComInit	4	static
-../Core/Src/Network/http_ssi.c:216:6:NetComTask	4	static
+../Core/Src/Network/http_ssi.c:118:14:GetStreet	8	static
+../Core/Src/Network/http_ssi.c:143:14:GetCrossoverStatus	8	static
+../Core/Src/Network/http_ssi.c:167:10:SsiHandler	8	static
+../Core/Src/Network/http_ssi.c:32:6:HttpdSsiInit	8	static
+../Core/Src/Network/http_ssi.c:198:6:NetComInit	0	static
+../Core/Src/Network/http_ssi.c:216:6:NetComTask	0	static

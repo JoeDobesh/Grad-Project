@@ -61,7 +61,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern PCB * volatile pCurrentTCB;
+extern PCB * volatile pCurrentPCB;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -217,71 +217,63 @@ void PendSV_Handler(void)
     /* This is a naked function. */
     __asm volatile
         (
-        "       cpsid f                         \n" /* disable interrupts */
+        "       cpsid	i                       \n" /* disable interrupts */
         "                                       \n"
-        "       tst lr, 0x04                    \n" /* test if we are in kernel or thread mode */
-        "       ite eq                          \n"
-        "       mrseq r0, msp                   \n"
-        "       mrsne r0, psp                   \n" /* move previous stack pointer into r0 */
+        "       tst 	lr, 0x04                \n" /* Test if we are in kernel or thread mode */
+        "       ite 	eq                      \n"
+        "       mrseq	r0, msp                 \n" /* If Kernal mode or Thread is using MSP, save MSP to r0 */
+        "       mrsne	r0, psp                 \n" /* If Thread mode and Thread is not using MSP, save PSP to r0 */
+        "                                       \n"
         "       isb                             \n" /* flush instruction pipeline */
         "                                       \n"
-        "       tst lr, 0x10                    \n" /* Is the task using the FPU context? */
-        "       it eq                           \n"
+        "       tst 	lr, 0x10                \n" /* Is the task using the FPU context? */
+        "       it 		eq                      \n"
         "       vstmdbeq r0!, {s16-s31}         \n" /* If so, push high vfp registers. May not work in thumb2 mode*/
         "                                       \n"
-        "       stmdb r0!, {r4-r11, lr}         \n" /* Save the core registers. */
+        "       stmdb	r0!, {r4-r11, lr}       \n" /* Save the core registers. */
         "                                       \n"
-        "       tst lr, 0x04                    \n"
-        "       it eq                           \n"
-        "       msreq msp, r0                   \n"
+        "       tst 	lr, 0x04                \n" /* Test if we are in Kernel mode or Thread mode */
+        "       it		eq                      \n"
+        "       msreq 	msp, r0                 \n" /* If so, move contents pointed to by r0 */
         "                                       \n"
-        "       ldr     r1, =pCurrentTCBConst   \n" /* Get the location of the current TCB and load the pointer into r1. */
+        "       ldr     r1, =pCurrentPCB        \n" /* Get the location of the current TCB and load the pointer into r1. */
         "       ldr     r2, [r1]                \n" /* load the first TCB item value into r2, Should be a uint32_t pointer (pTopOfStack)*/
-        "       str r0, [r2]                    \n" /* Save the new top of stack into the first member of the TCB. */
-        "                                       \n"
-//        "       stmdb sp!, {r0, r3}             \n" /* store the first two items of the stack onto r0 and r3 */
-//        "       mov r0, %0                      \n"
-//        "       msr basepri, r0                 \n" /* disable interrupts */
-//        "       dsb                             \n" /* complete all memory actions */
-//        "       isb                             \n" /* clear pipeline */
+        "       str 	r0, [r2]                \n" /* Save the new top of stack into the first member of the TCB. */
         "                                       \n"
         "       push {lr}                       \n"
         "       bl vTaskSwitchContext           \n" /* Call Context Switcher */
         "       pop {lr}                        \n"
         "                                       \n"
-//        "       mov r0, #0                      \n" /* Clear r0 */
-//        "       msr basepri, r0                 \n" /* enable interrupts */
-//        "       ldmia sp!, {r0, r3}             \n" /* load r0 and r3 back onto the stack */
+        "       ldr		r1, =pCurrentPCB        \n" /* Load the pointer to the current PCB which also points to the stack pointer */
+        "       ldr		r1, [r1]                \n" /* The first item in pxCurrentTCB is the pointer to the top of stack. */
+        "       ldr		r0, [r1]                \n"
         "                                       \n"
-        "       ldr r1, =pCurrentTCBConst       \n"
-        "       ldr r1, [r1]                    \n" /* The first item in pxCurrentTCB is the task top of stack. */
-        "       ldr r0, [r1]                    \n"
+        "       ldmia	r0!, {r4-r11, lr}       \n" /* Pop the core registers. */
+        //"       ldm		r0!, {r4-r11, lr}       \n" /* This superseads above. Pop the core registers. */
         "                                       \n"
-        "       ldmia r0!, {r4-r11, lr}         \n" /* Pop the core registers. */
-        "                                       \n"
-        "       tst lr, 0x10                    \n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
-        "       it eq                           \n"
+        "       tst 	lr, 0x10                \n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
+        "       it 		eq                      \n"
         "       vldmiaeq r0!, {s16-s31}         \n"
         "                                       \n"
-        "       mrs r1, control                 \n"
+        "       mrs 	r1, control             \n"
         "                                       \n"
-        "       tst lr, 0x04                    \n"
-        "       ittee eq                        \n"
-        "       biceq r1, 0x03                  \n"
-        "       msreq msp, r0                   \n"
-        "       orrne r1, 0x02                  \n"
-        "       msrne psp, r0                   \n" /* load the new top of stack onto PSP */
+        "       tst 	lr, 0x04                \n"
+        "       ittee 	eq                      \n" /* If Kernel mode or Thread mode is using MSP, zero flag = 1 */
+        "       biceq 	r1, 0x03                \n" /* Kernel mode or Thread mode using MSP privileged */
+        "       msreq 	msp, r0                 \n"
+        "       orrne 	r1, 0x02                \n"
+        "       msrne 	psp, r0                 \n" /* load the new top of stack onto PSP */
         "                                       \n"
-        "       msr control, r1                 \n"
+        "       msr 	control, r1             \n"
         "                                       \n"
         "       isb                             \n"
         "                                       \n"
-        "       cpsie f                         \n"
+        "       cpsie	i                       \n"
         "                                       \n"
-        "       bx lr                           \n" /* jump to next task */
+        "       bx		lr                      \n" /* jump to next task */
         "                                       \n"
         "       .align 4                        \n"
-        "pCurrentTCBConst: .word pCurrentTCB    \n"
+//        "pCurrentPCBConst: .word pCurrentPCB    \n"
 //        ::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
     );
   /* USER CODE END PendSV_IRQn 0 */
@@ -295,7 +287,7 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-  __disable_irq();
+  DisableAllInterrupts();
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
@@ -305,7 +297,7 @@ void SysTick_Handler(void)
 	  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
   }
   //Enable interrupts
-  __enable_irq();
+  EnableAllInterrupts();
   /* USER CODE END SysTick_IRQn 1 */
 }
 

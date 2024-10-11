@@ -17,9 +17,27 @@ extern "C" {
 #define HANDLER_MODE_MAIN_EXT		(0xFFFFFFE1)
 #define THREAD_MODE_MAIN_EXT		(0xFFFFFFE9)
 #define THREAD_MODE_PROCESS_EXT		(0xFFFFFFED)
-#define HANDLER_MODE_MAIN_BASIC		(0xFFFFFFF1)
-#define THREAD_MODE_MAIN_BASIC		(0xFFFFFFF9)
-#define THREAD_MODE_PROCESS_BASIC	(0xFFFFFFFD)
+#define HANDLER_MODE_MSP			(0xFFFFFFF1)
+#define THREAD_MODE_MSP				(0xFFFFFFF9)
+#define THREAD_MODE_PSP				(0xFFFFFFFD)
+
+extern uint32_t interruptDisableCounter;
+
+#define DisableAllInterrupts()		\
+	{								\
+		interruptDisableCounter++;	\
+		__asm volatile("cpsid i");	\
+	}
+
+#define EnableAllInterrupts()				\
+	{										\
+		interruptDisableCounter--;			\
+		if(interruptDisableCounter <= 0)	\
+		{									\
+			interruptDisableCounter = 0;	\
+			__asm volatile("cpsie i");		\
+		}									\
+	}
 
 typedef struct _PCB_
 {
