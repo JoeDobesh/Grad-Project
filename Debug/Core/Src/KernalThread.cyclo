@@ -1,0 +1,10 @@
+../Core/Src/KernalThread.c:109:23:PopNextPCB	3
+../Core/Src/KernalThread.c:130:13:PushLastPCB	3
+../Core/Src/KernalThread.c:157:28:InitialiseStack	1
+../Core/Src/KernalThread.c:80:6:KernelTask	1
+../Core/Src/KernalThread.c:68:13:ServerTask	1
+../Core/Src/KernalThread.c:181:13:LoadProcess	3
+../Core/Src/KernalThread.c:242:13:KernalThreadInit	7
+../Core/Src/KernalThread.c:89:6:TimeToContextSwitch	3
+../Core/Src/KernalThread.c:217:6:vTaskSwitchContext	3
+../Core/Src/KernalThread.c:293:6:KernalTask	5

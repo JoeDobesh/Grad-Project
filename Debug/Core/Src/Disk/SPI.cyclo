@@ -1,0 +1,6 @@
+../Core/Src/Disk/SPI.c:23:6:SPI_CS_High	1
+../Core/Src/Disk/SPI.c:15:6:SPI_Init	1
+../Core/Src/Disk/SPI.c:31:6:SPI_CS_Low	1
+../Core/Src/Disk/SPI.c:39:6:SPI_WriteRead	2
+../Core/Src/Disk/SPI.c:71:6:SPI_Read	2
+../Core/Src/Disk/SPI.c:102:6:SPI_Write	2

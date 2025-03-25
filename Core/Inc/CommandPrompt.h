@@ -13,8 +13,13 @@ extern "C" {
 #endif
 
 #include "Globals.h"
+#include "KernalThread.h"
 
 #define COMMAND_PROMPT_STACK_SIZE 1000
+
+extern uint32_t commandPromptStack[COMMAND_PROMPT_STACK_SIZE];
+
+extern PCB commandPromptPCB;
 
 void CommandPrompt(void);
 

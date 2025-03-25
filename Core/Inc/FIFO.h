@@ -20,7 +20,6 @@ BOOL RegisterFIFOInput(int id);
 BOOL PutFIFOData(int id, double data);
 BOOL GetFIFOData(int id, double* data);
 BOOL ReleaseFIFO(int id);
-BOOL FIFO_Test(void);
 
 #ifdef __cplusplus
 }

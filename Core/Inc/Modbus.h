@@ -47,9 +47,10 @@ BOOL WriteSingleRegister(uint16_t, uint16_t, uint8_t);
 //BOOL ReadWriteMultipleRegisters(uint8_t);
 //BOOL ReadFifoQueue(uint16_t, uint8_t);
 
+BOOL ModbusReadSensors(uint8_t *);
 void ModbusTest(void);
-uint16_t GetCrossingSensors(void);
-uint16_t GetCrossoverSensors(void);
+uint16_t ModbusGetCrossingSensors(void);
+uint16_t ModbusGetCrossoverSensors(void);
 
 #ifdef __cplusplus
 }

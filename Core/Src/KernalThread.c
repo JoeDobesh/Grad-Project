@@ -30,18 +30,18 @@
 #include "UserApps/SwitchPowerTask.h"
 
 #define TASK_NAME_SIZE 				32
-#define SYSTICK_VALUE_MS 			100
+#define SYSTICK_VALUE_MS 			10
 #define STACK_ALIGNMENT_MASK		(0x00000007)
 #define START_ADDRESS_MASK			(0xFFFFFFFE)
 #define INITIAL_XPSR				(0x01000000)
 #define TASK_RETURN_ADDRESS 		KernelTask;
-#define SERVER_TASK_STACK_SIZE		512
+#define SERVER_TASK_STACK_SIZE		(512*4)
 
-uint32_t interruptDisableCounter;
+int32_t interruptDisableCounter;
+
+extern IWDG_HandleTypeDef hiwdg;
 
 extern struct netif gnetif;
-extern uint32_t mailbagStack[];
-extern uint32_t commandPromptStack[];
 extern uint32_t modbusStack[];
 extern uint32_t speedControlStack[];
 extern uint32_t crossingStack[];
@@ -55,6 +55,7 @@ typedef struct _QUEUES_
 } QUEUE;
 
 PCB kernelPCB;
+//PCB serverPCB;
 uint32_t kernelStack[64];
 static BOOL enableSwitching = FALSE;
 static QUEUE readyQueue;
@@ -66,8 +67,11 @@ static uint32_t serverStack[SERVER_TASK_STACK_SIZE];
 //*****************************************************************************
 static void ServerTask(void)
 {
-	ethernetif_input(&gnetif);
-	sys_check_timeouts();
+	while(TRUE)
+	{
+		ethernetif_input(&gnetif);
+		sys_check_timeouts();
+	}
 }
 
 //*****************************************************************************
@@ -84,8 +88,7 @@ void KernelTask(void)
 //*****************************************************************************
 BOOL TimeToContextSwitch(void)
 {
-	uwTick += uwTickFreq;
-
+	HAL_IWDG_Refresh(&hiwdg);
 	if(enableSwitching == FALSE)
 	{
 		return FALSE;
@@ -177,7 +180,7 @@ static volatile uint32_t * InitialiseStack(volatile uint32_t * topOfStack, USER_
 //*****************************************************************************
 static BOOL LoadProcess(void * process,
 						uint32_t * stackPtr,
-						PCB * pcb,
+						//PCB * pcb,
 						uint32_t stack_size)
 {
 	uint32_t stackSize = stack_size;
@@ -185,8 +188,15 @@ static BOOL LoadProcess(void * process,
 
 	assert(process != NULL);
 	assert(stackPtr != NULL);
-	assert(pcb != NULL);
+	//assert(pcb != NULL);
 
+	PCB * pcb;
+
+	pcb = malloc(sizeof(PCB));
+	if(pcb == NULL)
+	{
+		return FALSE;
+	}
 	memset(stackPtr, 0x00, (stackSize * sizeof(uint32_t)));
 	pcb->nextPCB_ptr = NULL;
 	pcb->pStackLimit = stackPtr;
@@ -235,38 +245,38 @@ static void KernalThreadInit(void)
 	readyQueue.lastPCB_ptr  = NULL;
 	volatile PCB * p_tempPCB = &kernelPCB;
 
-	if(LoadProcess(HeartbeatTask1, &heartbeatStack1[0], &heartbeatPCB1, HEARTBEAT_STACK_SIZE_1) == FALSE)
+	if(LoadProcess(HeartbeatTask1, &heartbeatStack1[0], /*&heartbeatPCB1,*/ HEARTBEAT_STACK_SIZE_1) == FALSE)
 	{
 		printf("Heartbeat 1 Task Load Failure\n");
 	}
-	if(LoadProcess(HeartbeatTask2, &heartbeatStack2[0], &heartbeatPCB2, HEARTBEAT_STACK_SIZE_2) == FALSE)
+	if(LoadProcess(HeartbeatTask2, &heartbeatStack2[0], /*&heartbeatPCB2,*/ HEARTBEAT_STACK_SIZE_2) == FALSE)
 	{
 		printf("Heartbeat 2 Task Load Failure\n");
 	}
-	//if(LoadProcess(CommandPrompt, "CommandPrompt\n", commandPromptStack, COMMAND_PROMPT_STACK_SIZE) == FALSE)
-	//{
-	//	printf("Command Prompt Task Load Failure\n");
-	//}
-	/*
-	if(LoadProcess(ServerTask, "Server\n", serverStack, SERVER_TASK_STACK_SIZE) == FALSE)
+	if(LoadProcess(MailbagTask, &mailbagStack[0], /*&mailBagPCB,*/ MAILBAG_STACK_SIZE) == FALSE)
+	{
+		printf("Mailbag Task Load Failure\n");
+	}
+	if(LoadProcess(CommandPrompt, &commandPromptStack[0], /*&commandPromptPCB,*/ COMMAND_PROMPT_STACK_SIZE) == FALSE)
 	{
 		printf("Command Prompt Task Load Failure\n");
 	}
-	if(LoadProcess(ModbusTask, "Modbus\n", modbusStack, MODBUS_STACK_SIZE) == FALSE)
+	if(LoadProcess(ServerTask, &serverStack[0], /*&serverPCB,*/ SERVER_TASK_STACK_SIZE) == FALSE)
 	{
-		printf("Modbus Task Load Failure\n");
+		printf("Server Task Load Failure\n");
 	}
-	if(LoadProcess(CrossingTask, "Crossing\n", crossingStack, CROSSING_STACK_SIZE) == FALSE)
+	//if(LoadProcess(ModbusTask, &modbusStack[0], MODBUS_STACK_SIZE) == FALSE)
+	//{
+	//	printf("Modbus Task Load Failure\n");
+	//}
+	if(LoadProcess(CrossingTask, &crossingStack[0], CROSSING_STACK_SIZE) == FALSE)
 	{
 		printf("Crossing Task Load Failure\n");
 	}
-	if(LoadProcess(SwitchPowerTask, "Crossover\n", crossoverStack, CROSSOVER_STACK_SIZE) == FALSE)
+	/*
+	if(LoadProcess(SwitchPowerTask, &crossoverStack[0], CROSSOVER_STACK_SIZE) == FALSE)
 	{
 		printf("Crossover Task Load Failure\n");
-	}
-	if(LoadProcess(MailbagTask, "Mailbag\n", mailbagStack, MAILBAG_STACK_SIZE) == FALSE)
-	{
-	/	printf("Mailbag Task Load Failure\n");
 	}
 	*/
 	memset(kernelStack, 0x00, (64 * sizeof(uint32_t)));
@@ -282,18 +292,29 @@ static void KernalThreadInit(void)
 //*****************************************************************************
 void KernalTask(void)
 {
-	enableSwitching = FALSE;
 	DisableAllInterrupts();
-	//SoftTimerInit();
+	enableSwitching = FALSE;
 	MutexInit();
-	//FIFO_Init();
-	//SD_CardInit();
-	//InitFAT();
-	//HttpdSsiInit();
-	//HttpdCgiInit();
-	//RS485Init();
-	//ModbusInit();
-	//PowerControlInit();
+	FIFO_Init();
+	SoftTimerInit();
+	EnableAllInterrupts();
+	if( SD_CardInit() != sdcVALID)
+	{
+		printf("SD Card Init Failed\n");
+	}
+	else
+	{
+		if( InitFAT() != TRUE )
+		{
+			printf("FAT32 Init Failed\n");
+		}
+	}
+	DisableAllInterrupts();
+	HttpdSsiInit();
+	HttpdCgiInit();
+	RS485Init();
+	ModbusInit();
+	PowerControlInit();
 	KernalThreadInit();
 	quantumCounter = 0;
 	enableSwitching = TRUE;

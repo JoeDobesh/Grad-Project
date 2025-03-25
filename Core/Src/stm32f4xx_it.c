@@ -24,7 +24,6 @@
 /* USER CODE BEGIN Includes */
 #include "Globals.h"
 #include "KernalThread.h"
-#include "Mutex.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,19 +43,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define EXCEPTION_RETURN() \
-{ \
-	if ( CONTROL.FPCA == 1) \
-	{ \
-		LR = HANDLER_MODE_MAIN_EXT; \
-		LR = THREAD_MODE_PROCESS_EXT ; \
-	} \
-	else \
-	{ \
-		LR = HANDLER_MODE_MAIN_BASIC; \
-		LR = THREAD_MODE_PROCESS_BASIC; \
-	} \
-}
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -75,32 +62,12 @@ extern PCB * volatile pCurrentPCB;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern ETH_HandleTypeDef heth;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 extern DMA_HandleTypeDef hdma_uart4_rx;
 extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
-#define SetInterruptMask() \
-    __asm volatile \
-        ( \
-        " mov r0, %0      \n" \
-        " msr basepri, r0 \n" \
-        : \
-        :"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY) \
-        :"r0" \
-        )
-
-#define ClearInterruptMask() \
-    __asm volatile \
-        ( \
-        " mov r0, #0      \n" \
-        " msr basepri, r0 \n" \
-        : \
-        : \
-        :"r0" \
-        )
 
 /* USER CODE END EV */
 
@@ -376,20 +343,6 @@ void UART4_IRQHandler(void)
   /* USER CODE BEGIN UART4_IRQn 1 */
 
   /* USER CODE END UART4_IRQn 1 */
-}
-
-/**
-  * @brief This function handles Ethernet global interrupt.
-  */
-void ETH_IRQHandler(void)
-{
-  /* USER CODE BEGIN ETH_IRQn 0 */
-
-  /* USER CODE END ETH_IRQn 0 */
-  HAL_ETH_IRQHandler(&heth);
-  /* USER CODE BEGIN ETH_IRQn 1 */
-
-  /* USER CODE END ETH_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

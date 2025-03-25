@@ -1,0 +1,4 @@
+../Core/Src/UserApps/SwitchPowerTask.c:91:6:CloseSwitch	3
+../Core/Src/UserApps/SwitchPowerTask.c:104:6:OpenSwitch	3
+../Core/Src/UserApps/SwitchPowerTask.c:117:15:GetSwitchStatus	1
+../Core/Src/UserApps/SwitchPowerTask.c:157:6:SwitchPowerTask	12

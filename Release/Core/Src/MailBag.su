@@ -1,0 +1,5 @@
+../Core/Src/MailBag.c:84:10:RegisterMailBox	12	static
+../Core/Src/MailBag.c:112:6:ReleaseMailBox	24	static
+../Core/Src/MailBag.c:134:6:SendMessage	64	static
+../Core/Src/MailBag.c:176:6:RetrieveMessage	24	static
+../Core/Src/MailBag.c:211:6:MailbagTask	64	static

@@ -1,0 +1,4 @@
+../Core/Src/Disk/FATSystem.c:23:6:InitFAT	15
+../Core/Src/Disk/FATSystem.c:119:10:ReadFAT	3
+../Core/Src/Disk/FATSystem.c:153:9:FILE_GetNextCluster	6
+../Core/Src/Disk/FATSystem.c:188:10:Cluster2Sector	2

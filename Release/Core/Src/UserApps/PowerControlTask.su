@@ -1,0 +1,5 @@
+../Core/Src/UserApps/PowerControlTask.c:17:6:PowerControlInit	0	static
+../Core/Src/UserApps/PowerControlTask.c:26:10:GetPulseWidth	0	static
+../Core/Src/UserApps/PowerControlTask.c:32:6:PowerControlDecrament	0	static
+../Core/Src/UserApps/PowerControlTask.c:41:6:PowerControlIncrament	0	static
+../Core/Src/UserApps/PowerControlTask.c:50:6:PowerControlTask	16	static

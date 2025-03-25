@@ -1,0 +1,5 @@
+../Core/Src/Disk/SD_Card.c:166:13:Send8ClockCycles	1
+../Core/Src/Disk/SD_Card.c:177:13:Delayms	3
+../Core/Src/Disk/SD_Card.c:340:14:SD_SendCommand	24
+../Core/Src/Disk/SD_Card.c:200:12:SD_CardInit	17
+../Core/Src/Disk/SD_Card.c:445:12:SectorRead	7

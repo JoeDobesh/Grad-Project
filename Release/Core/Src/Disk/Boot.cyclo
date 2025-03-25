@@ -1,0 +1,7 @@
+../Core/Src/Disk/Boot.c:48:6:BootInit	1
+../Core/Src/Disk/Boot.c:56:6:GetMasterBootRecord	10
+../Core/Src/Disk/Boot.c:116:6:IsBootValid	1
+../Core/Src/Disk/Boot.c:123:10:GetFirstSectorLBA	2
+../Core/Src/Disk/Boot.c:134:10:GetTotalSectors	2
+../Core/Src/Disk/Boot.c:145:10:GetPartitionType	1
+../Core/Src/Disk/Boot.c:152:6:PrintBootSector	5

@@ -8,6 +8,7 @@
 #include "RS485.h"
 #include "Modbus.h"
 #include "SoftTimers.h"
+#include "Mutex.h"
 
 #define ADU_SIZE			256
 #define ADDRESS_BASE 		0
@@ -216,17 +217,17 @@ static uint16_t Calculate16BitCRC(uint8_t * buf, uint8_t len)
 }
 
 //*****************************************************************************
-// GetCrossingSensors
+// ModbusGetCrossingSensors
 //*****************************************************************************
-uint16_t GetCrossingSensors(void)
+uint16_t ModbusGetCrossingSensors(void)
 {
 	return (holdingRegister & 0x000F);
 }
 
 //*****************************************************************************
-// GetCrossoverSensors
+// ModbusGetCrossoverSensors
 //*****************************************************************************
-uint16_t GetCrossoverSensors(void)
+uint16_t ModbusGetCrossoverSensors(void)
 {
 	return (holdingRegister & 0x0070);
 }
@@ -262,7 +263,10 @@ static BOOL ModbusSend(void)
 	memcpy(sendBuff, sendMsg.modBuffer, bodySize);
 	sendBuff[bodySize+1] = (uint8_t)((sendMsg.crc >> 8) & 0x00FF);
 	sendBuff[bodySize] = (uint8_t)(sendMsg.crc & 0x00FF);
-	RS485SendString(sendBuff, (sendMsg.txDataSize + HEADER_SIZE + CRC_SIZE));
+	if(MutexSpinLock(MUTEX_RS485) == TRUE)
+	{
+		RS485SendString(sendBuff, (sendMsg.txDataSize + HEADER_SIZE + CRC_SIZE));
+	}
 	messageReceived = FALSE;
 
 	return TRUE;
@@ -385,6 +389,48 @@ void ModbusTask(void)
 	}
 }
 
+BOOL ModbusReadSensors(uint8_t * sensors)
+{
+	static uint32_t timer_id;
+	TIMER_PARAMS timer_params;
+	uint8_t character;
+	uint8_t * ch_ptr = &character;
+	uint8_t msg[16];
+
+	timer_params.callbackFunctionPtr = NULL;
+	timer_params.countTime_ms = 100;
+	timer_params.timerType = ONE_SHOT;
+
+	if(MutexLock(MUTEX_SOFT_TIMER) == FALSE)
+	{
+		return FALSE;
+	}
+	timer_id = RegisterTimer(timer_params);
+	MutexRelease(MUTEX_SOFT_TIMER);
+	if(timer_id == 0)
+	{
+		return FALSE;
+	}
+	RS485GetString(ch_ptr, 1);
+	if(ReadHoldingRegisters(0, 7, 0x01) == FALSE)
+	{
+		ReleaseTimer(timer_id);
+		return FALSE;
+	}
+	StartTimer(timer_id, RESPONSE_TIMEOUT);
+	while(CheckTimer(timer_id) == FALSE)
+	{
+		RS485GetString(msg, 16);
+	}
+
+	rcvMsg.addr = msg[0];
+	rcvMsg.msgType = msg[1];
+	rcvMsg.crc = msg[2];
+	ReleaseTimer(timer_id);
+
+	return TRUE;
+}
+
 //*****************************************************************************
 // ModbusPollSensorTask
 //*****************************************************************************
@@ -394,9 +440,8 @@ void ModbusPollSensorTask(void)
 	uint8_t * ch = &inByte;
 	static EXCEPTION_CODES exception;
 	static uint8_t dataCounter;
-	static BOOL exit = FALSE;
 
-	while(exit == FALSE)
+	while(TRUE)
 	{
 		switch(readState)
 		{

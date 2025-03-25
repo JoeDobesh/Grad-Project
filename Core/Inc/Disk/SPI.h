@@ -14,7 +14,7 @@ extern "C" {
 
 #include "Globals.h"
 
-BOOL SPI_Init(void);
+void SPI_Init(void);
 void SPI_CS_High(void);
 void SPI_CS_Low(void);
 BOOL SPI_Read(uint8_t *, uint16_t);

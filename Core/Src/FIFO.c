@@ -156,44 +156,6 @@ BOOL ReleaseFIFO(int id)
 	return FALSE;
 }
 
-//*****************************************************************************
-// FIFO_Test
-//*****************************************************************************
-BOOL FIFO_Test(void)
-{
-	static int localID = 0x5A;
-	static double data;
-
-	if(RegisterFIFOInput(localID) == FALSE)
-	{
-		printf("Not FIFOs Available\n");
-		return FALSE;
-	}
-	if(PutFIFOData(localID, 0x5AA55AA5) == FALSE)
-	{
-		printf("FIFO Full");
-		return FALSE;
-	}
-	if(GetFIFOData(localID, &data) == FALSE)
-	{
-		printf("Broken FIFO\n");
-		return FALSE;
-	}
-	if(data != 0x5AA55AA5)
-	{
-		printf("FIFO Data Corrupted\n");
-		return FALSE;
-	}
-	if(ReleaseFIFO(localID) == FALSE)
-	{
-		printf("FIFO Release Failure\n");
-		return FALSE;
-	}
-	printf("FIFO Test Passed");
-
-	return TRUE;
-}
-
 // EOF
 
 //lines 160

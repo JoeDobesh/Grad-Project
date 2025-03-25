@@ -83,6 +83,8 @@ typedef struct
 
 typedef FILE_DAT * FILEOBJ;
 
+extern DISK myDisk;
+
 BOOL InitFAT(void);
 uint32_t ReadFAT(DISK *, uint32_t);
 uint32_t Cluster2Sector(DISK *, uint32_t);

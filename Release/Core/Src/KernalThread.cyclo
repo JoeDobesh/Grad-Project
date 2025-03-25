@@ -1,0 +1,5 @@
+../Core/Src/KernalThread.c:76:6:KernelTask	1
+../Core/Src/KernalThread.c:126:13:PushLastPCB	3
+../Core/Src/KernalThread.c:84:6:TimeToContextSwitch	3
+../Core/Src/KernalThread.c:206:6:vTaskSwitchContext	4
+../Core/Src/KernalThread.c:286:6:KernalTask	4

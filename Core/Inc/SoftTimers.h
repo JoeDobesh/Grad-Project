@@ -83,10 +83,6 @@ void TimerTask(void);
 /// </summary>
 void TimerInterrupt(void);
 
-void StartTimerTest(void);
-
-BOOL TimerTestComplete(void);
-
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,7 @@
+../Core/Src/SoftTimers.c:23:6:SoftTimerInit	2
+../Core/Src/SoftTimers.c:36:6:TimerParametersInit	1
+../Core/Src/SoftTimers.c:46:9:RegisterTimer	5
+../Core/Src/SoftTimers.c:69:6:StartTimer	7
+../Core/Src/SoftTimers.c:103:6:CheckTimer	5
+../Core/Src/SoftTimers.c:132:6:ReleaseTimer	3
+../Core/Src/SoftTimers.c:152:6:TimerInterrupt	7

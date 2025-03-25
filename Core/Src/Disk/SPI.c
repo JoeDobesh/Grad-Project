@@ -12,11 +12,9 @@ extern SPI_HandleTypeDef hspi1;
 //*****************************************************************************
 // SPI_Init
 //*****************************************************************************
-BOOL SPI_Init(void)
+void SPI_Init(void)
 {
 	SPI_CS_High();
-
-	return TRUE;
 }
 
 //*****************************************************************************
@@ -74,6 +72,7 @@ BOOL SPI_Read(uint8_t * data, uint16_t size)
 {
 	BOOL retVal;
 
+	data[0] = 0xFF;
 	HAL_StatusTypeDef status = HAL_SPI_Receive(&hspi1, data, size, 2000);
 	switch ( status )
 	{

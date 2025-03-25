@@ -25,15 +25,18 @@ Core/Src/CommandPrompt.o: ../Core/Src/CommandPrompt.c ../Core/Inc/FIFO.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_iwdg.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/main.h ../Core/Inc/RS485.h ../Core/Inc/CommandPrompt.h \
- ../Core/Inc/SoftTimers.h ../Core/Inc/Modbus.h ../Core/Inc/Disk\Boot.h \
- ../Core/Inc/Globals.h ../Core/Inc/Disk\SD_Card.h \
+ ../Core/Inc/KernalThread.h ../Core/Inc/SoftTimers.h ../Core/Inc/Modbus.h \
+ ../Core/Inc/Disk\Boot.h ../Core/Inc/Globals.h ../Core/Inc/Disk\SD_Card.h \
  ../Core/Inc/Disk\Directories.h ../Core/Inc/Disk\FATSystem.h \
  ../Core/Inc/Disk\Boot.h ../Core/Inc/Disk\FileSystem.h \
  ../Core/Inc/Disk\Directories.h ../Core/Inc/UserApps/PowerControlTask.h
@@ -64,8 +67,11 @@ Core/Src/CommandPrompt.o: ../Core/Src/CommandPrompt.c ../Core/Inc/FIFO.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_iwdg.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
@@ -73,6 +79,7 @@ Core/Src/CommandPrompt.o: ../Core/Src/CommandPrompt.c ../Core/Inc/FIFO.h \
 ../Core/Inc/main.h:
 ../Core/Inc/RS485.h:
 ../Core/Inc/CommandPrompt.h:
+../Core/Inc/KernalThread.h:
 ../Core/Inc/SoftTimers.h:
 ../Core/Inc/Modbus.h:
 ../Core/Inc/Disk\Boot.h:

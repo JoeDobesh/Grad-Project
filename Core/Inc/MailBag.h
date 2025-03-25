@@ -13,9 +13,13 @@ extern "C" {
 #endif
 
 #include "Globals.h"
+#include "KernalThread.h"
 
 #define MAX_MESSAGE_SIZE 256
 #define MAILBAG_STACK_SIZE 1000
+
+extern uint32_t mailbagStack[MAILBAG_STACK_SIZE];
+extern PCB mailBagPCB;
 
 typedef struct _MESSAGE
 {

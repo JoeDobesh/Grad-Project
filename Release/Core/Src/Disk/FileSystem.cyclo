@@ -1,0 +1,5 @@
+../Core/Src/Disk/FileSystem.c:27:9:FillFileObject	5
+../Core/Src/Disk/FileSystem.c:84:8:FileRead	8
+../Core/Src/Disk/FileSystem.c:172:8:FileOpen	4
+../Core/Src/Disk/FileSystem.c:229:8:FileClose	1
+../Core/Src/Disk/FileSystem.c:239:8:Filefind	11

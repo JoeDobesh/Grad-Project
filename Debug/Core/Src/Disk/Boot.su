@@ -1,7 +1,7 @@
 ../Core/Src/Disk/Boot.c:48:6:BootInit	0	static
 ../Core/Src/Disk/Boot.c:56:6:GetMasterBootRecord	24	static
-../Core/Src/Disk/Boot.c:116:6:IsBootValid	0	static
-../Core/Src/Disk/Boot.c:123:10:GetFirstSectorLBA	0	static
-../Core/Src/Disk/Boot.c:134:10:GetTotalSectors	0	static
-../Core/Src/Disk/Boot.c:145:10:GetPartitionType	0	static
-../Core/Src/Disk/Boot.c:152:6:PrintBootSector	544	static
+../Core/Src/Disk/Boot.c:115:6:IsBootValid	0	static
+../Core/Src/Disk/Boot.c:122:10:GetFirstSectorLBA	0	static
+../Core/Src/Disk/Boot.c:133:10:GetTotalSectors	0	static
+../Core/Src/Disk/Boot.c:144:10:GetPartitionType	0	static
+../Core/Src/Disk/Boot.c:151:6:PrintBootSector	544	static

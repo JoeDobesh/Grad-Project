@@ -16,23 +16,26 @@
 #include "UserApps/PowerControlTask.h"
 
 #define INPUT_BUFFER_SIZE 256
-#define MAX_FUNCTION_COUNT 4
+#define MAX_FUNCTION_COUNT 5
 
 extern UART_HandleTypeDef huart3;
-extern DISK myDisk;
+extern RTC_HandleTypeDef hrtc;
 
-int32_t commandPromptStack[COMMAND_PROMPT_STACK_SIZE];
+uint32_t commandPromptStack[COMMAND_PROMPT_STACK_SIZE];
+
+//PCB commandPromptPCB;
 
 static uint8_t cpState, testState;
-static uint8_t runState, sdState;
+static uint8_t runState, sdState, rtcState;
 static char inputBuffer[INPUT_BUFFER_SIZE];
 
 static const char mainMenu[] = {
 "\n \
 Help Menu\n \
 help - Displays this menu\n \
-run - Sends you to the railroad manual run menu\n \
-sd - Mounts the SD Card\n \
+run  - Sends you to the railroad manual run menu\n \
+sd   - Mounts the SD Card\n \
+rtc  - RTC Menu\n \
 test - Sends you to the driver test menu\n \
 \n"
 };
@@ -56,16 +59,24 @@ cat <file> - Display the selected file \
 \n"
 };
 
+static const char rtcMenu[] = {
+"\n \
+Return To The Main Menu - 0\n \
+Get RTC Time            - 1\n \
+Get RTC Date            - 2\n \
+Set RTC Time            - 3\n \
+Set RTC Date            - 4\n \
+\n"
+};
+
 static const char testMenu[] = {
 "\n \
 Test Menu\n \
 Enter the number of the test you would like to run\n \
 Return To Main Menu - 0\n \
-Soft Timer Test     - 1\n \
-Pipeline Test       - 2\n \
-Check Boot Sector   - 3\n \
-Check RS-485        - 4\n \
-Check Modbus        - 5\n \
+Check Boot Sector   - 1\n \
+Check RS-485        - 2\n \
+Check Modbus        - 3\n \
 \n"
 };
 
@@ -73,6 +84,7 @@ static void SDCardTask(void);
 static void RunMenuTask(void);
 static void TestMenuTask(void);
 static void MainMenuTask(void);
+static void RtcMenuTask(void);
 
 typedef void (*FunctionPtr)(void);
 
@@ -80,6 +92,7 @@ static FunctionPtr functionArray[] = {
 	&MainMenuTask,
 	&RunMenuTask,
 	&SDCardTask,
+	&RtcMenuTask,
 	&TestMenuTask
 };
 
@@ -115,21 +128,18 @@ static void JumpToSD(void)
 //*****************************************************************************
 // JumpToTest
 //*****************************************************************************
-static void JumpToTest(void)
+static void JumpToRTC(void)
 {
 	functionPtrIndex = 3;
-	testState = 0;
+	rtcState = 0;
 }
 
 //*****************************************************************************
-// CommandPromptInit
+// JumpToTest
 //*****************************************************************************
-static void CommandPromptInit(void)
+static void JumpToTest(void)
 {
-	functionPtrIndex = 0;
-	cpState = 0;
-	runState = 0;
-	sdState = 0;
+	functionPtrIndex = 4;
 	testState = 0;
 }
 
@@ -158,10 +168,13 @@ static BOOL UART_3_SendString(char * data,  size_t size)
 //*****************************************************************************
 void CommandPrompt(void)
 {
-	BOOL exit = FALSE;
-
-	CommandPromptInit();
-	while(exit == FALSE)
+	functionPtrIndex = 0;
+	cpState = 0;
+	runState = 0;
+	sdState = 0;
+	rtcState = 0;
+	testState = 0;
+	while(TRUE)
 	{
 		if ( functionPtrIndex < MAX_FUNCTION_COUNT)
 		{
@@ -193,7 +206,7 @@ static void MainMenuTask(void)
 		cpState++;
 		break;
 	case 1:
-		status = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10); //HAL_MAX_DELAY);
+		status = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10);
 		if(status == HAL_OK)
 		{
 			if(ch == '\n')
@@ -228,6 +241,10 @@ static void MainMenuTask(void)
 		else if (strcmp(inputBuffer, "sd") == 0)
 		{
 			JumpToSD();
+		}
+		else if (strcmp(inputBuffer, "rtc") == 0)
+		{
+			JumpToRTC();
 		}
 		else if (strcmp(inputBuffer, "test") == 0)
 		{
@@ -265,7 +282,7 @@ static void RunMenuTask(void)
 		runState++;
 		break;
 	case 1:
-		status = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10); //HAL_MAX_DELAY);
+		status = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10);
 		if(status == HAL_OK)
 		{
 			if(ch == '\n')
@@ -483,6 +500,173 @@ static void SDCardTask(void)
 	}
 }
 
+static void GetTime(void);
+static void GetDate(void);
+static BOOL SetTime(void);
+static BOOL SetDate(void);
+
+//*****************************************************************************
+// RtcMenuTask
+//*****************************************************************************
+static void RtcMenuTask(void)
+{
+	HAL_StatusTypeDef status;
+	char str1[] = "rtc>>";
+	char ch;
+	size_t size = sizeof(str1);
+	static uint32_t inputBuffCounter;
+
+	switch(rtcState)
+	{
+	case 0:
+		printf("%s", rtcMenu);
+		UART_3_SendString(str1,  size);
+		inputBuffCounter = 0;
+		rtcState++;
+		break;
+	case 1:
+		status = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10); //HAL_MAX_DELAY);
+		if(status == HAL_OK)
+		{
+			if(ch == '\n')
+			{
+				HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+				inputBuffer[inputBuffCounter++] = '\0';
+				rtcState++;
+			}
+			else if (ch == 0x08) //Backspace
+			{
+				ch = '\b';
+				HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+				inputBuffCounter--;
+			}
+			else if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'z'))
+			{
+				HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+				inputBuffer[inputBuffCounter++] = ch;
+				inputBuffCounter = (inputBuffCounter >= INPUT_BUFFER_SIZE)? (INPUT_BUFFER_SIZE - 1): inputBuffCounter;
+			}
+		}
+		break;
+	case 2:
+		if(strcmp(inputBuffer, "0") == 0)
+		{
+			JumpToMain(); //Return to Main Menu
+		}
+		else if(strcmp(inputBuffer, "1") == 0)
+		{
+			GetTime();
+			rtcState = 0;
+		}
+		else if(strcmp(inputBuffer, "2") == 0)
+		{
+			GetDate();
+			rtcState = 0;
+		}
+		else if(strcmp(inputBuffer, "3") == 0)
+		{
+			SetTime();
+			rtcState = 0;
+		}
+		else if(strcmp(inputBuffer, "4") == 0)
+		{
+			SetDate();
+			rtcState = 0;
+		}
+		else
+		{
+			rtcState = 0;
+		}
+		break;
+	default:
+		rtcState = 0;
+		break;
+	}
+}
+
+//*****************************************************************************
+// GetTime
+//*****************************************************************************
+static void GetTime(void)
+{
+	RTC_TimeTypeDef sTime;
+	char buffer[25];
+
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	sprintf(buffer, "Current Time: %02d:%02d:%02d\n", sTime.Hours, sTime.Minutes, sTime.Seconds);
+	HAL_UART_Transmit(&huart3, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+}
+
+//*****************************************************************************
+// GetDate
+//*****************************************************************************
+static void GetDate(void)
+{
+	RTC_DateTypeDef sDate;
+	char buffer[25];
+
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	sprintf(buffer, "Current Date: %02d-%02d-%02d\n", sDate.Month, sDate.Date, sDate.Year);
+	HAL_UART_Transmit(&huart3, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+}
+
+//*****************************************************************************
+// SetTime
+//*****************************************************************************
+static BOOL SetTime(void)
+{
+	RTC_TimeTypeDef sTime = {0};
+	uint8_t buffer[2];
+
+	HAL_UART_Transmit(&huart3, (uint8_t *)"Enter Hours (00-23): ", 21, HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3, buffer, 2, HAL_MAX_DELAY);
+	sTime.Hours = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
+	HAL_UART_Transmit(&huart3, (uint8_t *)"\nEnter Minutes (00-59): ", 25, HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3, buffer, 2, HAL_MAX_DELAY);
+	sTime.Minutes = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
+	HAL_UART_Transmit(&huart3, (uint8_t *)"\nEnter Seconds (00-59): ", 25, HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3, buffer, 2, HAL_MAX_DELAY);
+	sTime.Seconds = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
+	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	if(HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
+	{
+		HAL_UART_Transmit(&huart3, (uint8_t *)"SetTime Failed - Invalid Format\n", 32, HAL_MAX_DELAY);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+//*****************************************************************************
+// SetDate
+//*****************************************************************************
+static BOOL SetDate(void)
+{
+	RTC_DateTypeDef sDate = {0};
+	uint8_t buffer[2];
+
+	HAL_UART_Transmit(&huart3, (uint8_t *)"Enter Month (01-12): ", 21, HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3, buffer, 2, HAL_MAX_DELAY);
+	sDate.Month = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
+	HAL_UART_Transmit(&huart3, (uint8_t *)"\nEnter Day (01-31): ", 21, HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3, buffer, 2, HAL_MAX_DELAY);
+	sDate.Date = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
+	HAL_UART_Transmit(&huart3, (uint8_t *)"\nEnter Weekday (1-Mon, 7=Sun): ", 32, HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3, buffer, 1, HAL_MAX_DELAY);
+	sDate.WeekDay = (buffer[0] - '0');
+	HAL_UART_Transmit(&huart3, (uint8_t *)"\nEnter Year 20(00-99): ", 24, HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3, buffer, 2, HAL_MAX_DELAY);
+	sDate.Year = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
+	if(HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
+	{
+		HAL_UART_Transmit(&huart3, (uint8_t *)"SetDate Failed - Invalid Format\n", 32, HAL_MAX_DELAY);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 //*****************************************************************************
 // TestMenuTask
 //*****************************************************************************
@@ -533,18 +717,6 @@ static void TestMenuTask(void)
 		}
 		else if(strcmp(inputBuffer, "1") == 0)
 		{
-			StartTimerTest();
-			char * str2 = "Starting SoftTimers Test\n";
-			UART_3_SendString(str2, sizeof(str2));
-			testState = 4; //Soft Timer Test
-		}
-		else if(strcmp(inputBuffer, "2") == 0)
-		{
-			FIFO_Test();
-			testState = 5;
-		}
-		else if(strcmp(inputBuffer, "3") == 0)
-		{
 			//Read the Boot Sector
 			if ( PrintBootSector() == FALSE )
 			{
@@ -553,18 +725,18 @@ static void TestMenuTask(void)
 			}
 			else
 			{
-				testState = 6;
+				testState = 4;
 			}
 		}
-		else if(strcmp(inputBuffer, "4") == 0)
+		else if(strcmp(inputBuffer, "2") == 0)
 		{
 			RS485Test();
-			testState = 7;
+			testState = 5;
 		}
-		else if(strcmp(inputBuffer, "5") == 0)
+		else if(strcmp(inputBuffer, "3") == 0)
 		{
 			ReadHoldingRegisters(1, 1, 1);
-			testState = 7;
+			testState = 5;
 		}
 		else
 		{
@@ -572,18 +744,9 @@ static void TestMenuTask(void)
 		}
 		break;
 	case 4:
-		if (TimerTestComplete() == TRUE)
-		{
-			testState = 0;
-		}
+		testState = 0;
 		break;
 	case 5:
-		testState = 0;
-		break;
-	case 6:
-		testState = 0;
-		break;
-	case 7:
 		testState = 0;
 		break;
 	default:

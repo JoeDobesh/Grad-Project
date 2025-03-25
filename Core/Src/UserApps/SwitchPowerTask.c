@@ -124,7 +124,7 @@ SWITCH_STATES GetSwitchStatus(void)
 //*****************************************************************************
 static void GetSensorStatus(void)
 {
-	uint16_t data = GetCrossoverSensors();
+	uint16_t data = ModbusGetCrossoverSensors();
 	if(data & 0x0010)
 	{
 		sensorCommon = TRUE;

@@ -82,8 +82,7 @@ BOOL GetMasterBootRecord(void) {
 	}
 	if (tempBuffer[0] == 0xEB && tempBuffer[1] == 0x58
 			&& tempBuffer[2] == 0x90) {
-		printf(
-				"Master Boot Record Does Not Exist. Found Boot Sector. Making Concessions\n");
+		printf("Master Boot Record Does Not Exist. Found Boot Sector. Making Concessions\n");
 		//TODO: Notify system that there is only one partition with no MBR sector
 		bootSuccess = TRUE;
 		goto BOOT_ERROR;
@@ -95,7 +94,7 @@ BOOL GetMasterBootRecord(void) {
 	}
 	partitionType = partitionEntries[0].partitionType;
 	if (partitionType != FAT32lba && partitionType != FAT16) {
-		printf("GetBootSector: Unsupported file system\n");
+		printf("GetBootSector: Unsupported file system: %d\n", partitionType);
 		bootSuccess = FALSE;
 		retVal = FALSE;
 		goto BOOT_ERROR;

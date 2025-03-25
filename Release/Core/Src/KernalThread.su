@@ -1,0 +1,5 @@
+../Core/Src/KernalThread.c:76:6:KernelTask	0	static
+../Core/Src/KernalThread.c:126:13:PushLastPCB	0	static
+../Core/Src/KernalThread.c:84:6:TimeToContextSwitch	0	static
+../Core/Src/KernalThread.c:206:6:vTaskSwitchContext	8	static
+../Core/Src/KernalThread.c:286:6:KernalTask	8	static,ignoring_inline_asm

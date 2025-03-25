@@ -1,0 +1,10 @@
+../Core/Src/main.c:82:5:__io_putchar	16	static
+../Core/Src/main.c:89:5:__io_getchar	16	static
+../Core/Src/main.c:97:6:HAL_UART_TxCpltCallback	0	static
+../Core/Src/main.c:109:6:HAL_UARTEx_RxEventCallback	0	static
+../Core/Src/main.c:121:6:HAL_TIM_PeriodElapsedCallback	0	static
+../Core/Src/main.c:134:6:HAL_SPI_TxCpltCallback	0	static
+../Core/Src/main.c:142:6:HAL_SPI_RxCpltCallback	0	static
+../Core/Src/main.c:213:6:SystemClock_Config	88	static,ignoring_inline_asm
+../Core/Src/main.c:155:5:main	88	static,ignoring_inline_asm
+../Core/Src/main.c:646:6:Error_Handler	0	static,ignoring_inline_asm

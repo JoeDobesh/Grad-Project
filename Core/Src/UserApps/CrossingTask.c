@@ -7,6 +7,7 @@
 
 #include "KernalThread.h"
 #include "UserApps/CrossingTask.h"
+#include "Mutex.h"
 #include "Modbus.h"
 #include "SoftTimers.h"
 
@@ -78,85 +79,92 @@ uint8_t GetSersorValues(void)
 //*****************************************************************************
 void CrossingTask(void)
 {
-	BOOL exit = FALSE;
-
+	static uint8_t sensors;
 	CrossingInit();
-	while(exit == FALSE)
+	while(TRUE)
 	{
-		sensorData = GetCrossingSensors();
-		switch(crossingState)
+		if(MutexLock(MUTEX_MODBUS) == TRUE)
 		{
-		case stateZero:
-		case stateOne:
-			if(sensorData & FAR_1 || sensorData & NEAR_2)
+			//sensorData = GetCrossingSensors();
+			if(ModbusReadSensors(&sensors) == TRUE)
 			{
-				//Close Gates
-				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
-				gateStatus    = GATE_CLOSED;
-				crossingState = stateTwo;
+				sensorData = sensors;
+				switch(crossingState)
+				{
+				case stateZero:
+				case stateOne:
+					if((sensorData & FAR_1) || (sensorData & NEAR_2))
+					{
+						//Close Gates
+						WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+						gateStatus    = GATE_CLOSED;
+						crossingState = stateTwo;
+					}
+					else if((sensorData & FAR_2) || (sensorData & NEAR_1))
+					{
+						//Close Gates
+						WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+						gateStatus    = GATE_CLOSED;
+						crossingState = stateThree;
+					}
+					break;
+				case stateTwo:
+					if(sensorData & NEAR_2)
+					{
+						crossingState = stateFour;
+					}
+					break;
+				case stateThree:
+					if(sensorData & NEAR_1)
+					{
+						crossingState = stateFive;
+					}
+					break;
+				case stateFour:
+					if((sensorData & NEAR_2) == 0)
+					{
+						//Open Gates
+						WriteSingleRegister(0x00, 0, crossings[crossingSelect].address);
+						gateStatus    = GATE_OPEN;
+						crossingState = stateSix;
+					}
+					break;
+				case stateFive:
+					if((sensorData & NEAR_1) == 0)
+					{
+						//Open Gates
+						WriteSingleRegister(0x00, 0, crossings[crossingSelect].address);
+						gateStatus    = GATE_OPEN;
+						crossingState = stateSix;
+					}
+					break;
+				case stateSix:
+					if (sensorData == 0)
+					{
+						crossingState = stateOne;
+					}
+					else if(sensorData & NEAR_1)
+					{
+						//Close Gates
+						WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+						gateStatus    = GATE_CLOSED;
+						crossingState = stateThree;
+					}
+					else if(sensorData & NEAR_2)
+					{
+						//Close Gates
+						WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
+						gateStatus    = GATE_CLOSED;
+						crossingState = stateTwo;
+					}
+					break;
+				default:
+					crossingState = stateOne;
+					break;
+				}
 			}
-			else if(sensorData & FAR_2 || sensorData & NEAR_1)
-			{
-				//Close Gates
-				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
-				gateStatus    = GATE_CLOSED;
-				crossingState = stateThree;
-			}
-			break;
-		case stateTwo:
-			if(sensorData & NEAR_2)
-			{
-				crossingState = stateFour;
-			}
-			break;
-		case stateThree:
-			if(sensorData & NEAR_1)
-			{
-				crossingState = stateFive;
-			}
-			break;
-		case stateFour:
-			if((sensorData & NEAR_2) == 0)
-			{
-				//Open Gates
-				WriteSingleRegister(0x00, 0, crossings[crossingSelect].address);
-				gateStatus    = GATE_OPEN;
-				crossingState = stateSix;
-			}
-			break;
-		case stateFive:
-			if((sensorData & NEAR_1) == 0)
-			{
-				//Open Gates
-				WriteSingleRegister(0x00, 0, crossings[crossingSelect].address);
-				gateStatus    = GATE_OPEN;
-				crossingState = stateSix;
-			}
-			break;
-		case stateSix:
-			if (sensorData == 0)
-			{
-				crossingState = stateOne;
-			}
-			else if(sensorData & NEAR_1)
-			{
-				//Close Gates
-				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
-				gateStatus    = GATE_CLOSED;
-				crossingState = stateThree;
-			}
-			else if(sensorData & NEAR_2)
-			{
-				//Close Gates
-				WriteSingleRegister(0x00, 1, crossings[crossingSelect].address);
-				gateStatus    = GATE_CLOSED;
-				crossingState = stateTwo;
-			}
-			break;
-		default:
-			crossingState = stateOne;
-			break;
 		}
+		MutexRelease(MUTEX_MODBUS);
 	}
 }
 

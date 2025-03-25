@@ -1,0 +1,4 @@
+../Core/Src/Network/http_ssi.c:167:10:SsiHandler	8	static
+../Core/Src/Network/http_ssi.c:32:6:HttpdSsiInit	0	static
+../Core/Src/Network/http_ssi.c:198:6:NetComInit	0	static
+../Core/Src/Network/http_ssi.c:216:6:NetComTask	0	static

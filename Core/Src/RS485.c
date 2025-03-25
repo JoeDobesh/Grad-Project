@@ -213,7 +213,7 @@ void RS485Test(void)
 		switch(testState)
 		{
 		case 0:
-			RS485Init();
+			//RS485Init();
 			printf("Type something to send\n");
 			UART_3_SendString(str1,  size);
 			inputBuffCounter = 0;

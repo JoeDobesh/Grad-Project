@@ -21,7 +21,7 @@ extern "C" {
 #define THREAD_MODE_MSP				(0xFFFFFFF9)
 #define THREAD_MODE_PSP				(0xFFFFFFFD)
 
-extern uint32_t interruptDisableCounter;
+extern int32_t interruptDisableCounter;
 
 #define DisableAllInterrupts()		\
 	{								\

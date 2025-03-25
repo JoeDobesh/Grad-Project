@@ -43,7 +43,7 @@
 
 #define SDC_FLOATING_BUS 	0xFF
 #define DATA_ACCEPTED		0x05
-#define SDC_BAD_RESPONSE	SDC_FLOATING_BUS
+#define SDC_NO_RESPONSE		SDC_FLOATING_BUS
 
 #define SYSTEM_CLOCK		((uint32_t)20000000)
 #define CLKSPERINSTRUCTION	((uint8_t)4)
@@ -58,6 +58,7 @@
 #define R1_ERASE_SEQUENCE_ERROR	0x10
 #define R1_ADDRESS_ERROR		0x20
 #define R1_PARAMETER_ERROR		0x40
+#define R1_ERROR_MASK           0x78
 
 #define R7_COMMAND_VERSION		0xF0
 #define R7_VOLTAGE_ACCEPTED		0x0F
@@ -176,7 +177,7 @@ static BOOL Send8ClockCycles(void)
 //*****************************************************************************
 static void Delayms(uint8_t milliseconds)
 {
-	if ( StartTimer(delayTimerHandle, milliseconds) == FALSE )
+	if( StartTimer(delayTimerHandle, milliseconds) == FALSE )
 	{
 		return;
 	}
@@ -222,30 +223,55 @@ SDC_ERRORS SD_CardInit(void)
 	SPI_CS_High();
 	Delayms(100);
 	timeout = 0;
-	while ( timeout < 50 )
+	while( timeout < 50 )
 	{
-		if ( Send8ClockCycles() == TRUE )
+		if( Send8ClockCycles() == TRUE )
 		{
 			timeout++;
 		}
 	}
 	response = SD_SendCommand(GO_IDLE_STATE, 0);
-	if(response.r1.respByte == SDC_BAD_RESPONSE)
+	if( response.r1.respByte == SDC_NO_RESPONSE )
 	{
 		status = sdcCARD_NOT_INIT_FAILURE;
 		printf("SD Card Init - Card not found\n");
 		bootState = NO_CARD;
-		goto InitError;
+		goto INIT_ERROR;
 	}
 	bootState = INIT_FAILED;
-	if(!(response.r1.respByte & R1_IN_IDLE_STATE))
+	if( (response.r1.respByte & R1_ERROR_MASK) > 0)
+	{
+		status = sdcCARD_NOT_INIT_FAILURE;
+		printf("SD Card Init - Idle State Errors\n");
+		bootState = NO_CARD;
+		goto INIT_ERROR;
+	}
+	if( !(response.r1.respByte & R1_IN_IDLE_STATE) )
 	{
 		status = sdcCARD_NOT_INIT_FAILURE;
 		printf("SD Card Init - Idle State Failure\n");
-		goto InitError;
+		goto INIT_ERROR;
 	}
-	response = SD_SendCommand(SEND_IF_COND, 0x000001AA);
-	if(response.r7.respByte0 & R1_ILLEGAL_COMMAND)
+	attempts = 0;
+	while(1)
+	{
+		response = SD_SendCommand(SEND_IF_COND, 0x000001AA);
+		if(response.r7.respByte0 == 0xFF)
+		{
+			attempts++;
+			if(attempts > 6)
+			{
+				status = sdcCARD_NOT_INIT_FAILURE;
+				printf("SD Card Init - No IF Cond Response\n");
+				goto INIT_ERROR;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+	if( response.r7.respByte0 & R1_ILLEGAL_COMMAND )
 	{
 		printf("SD Card Init - Card Version: 1.x\n");
 		highCapacityCard = FALSE;
@@ -254,72 +280,86 @@ SDC_ERRORS SD_CardInit(void)
 	{
 		printf("SD Card Init - Card Version: +2.0\n");
 		highCapacityCard = TRUE;
-		if ( (response.r7.respByte0 & R1_IN_IDLE_STATE) == 0x00 )
+		if( (response.r7.respByte0 & R1_IN_IDLE_STATE) == 0x00 )
 		{
 			status = sdcCARD_NOT_INIT_FAILURE;
 			printf("SD Card Init - Card no longer in idle state\n");
-			goto InitError;
+			goto INIT_ERROR;
 		}
-		if(!(response.r7.respByte3 & R7_VOLTAGE_3_3))
+		if( !(response.r7.respByte3 & R7_VOLTAGE_3_3) )
 		{
 			status = sdcCARD_NOT_INIT_FAILURE;
 			printf("SD Card Init - Card voltage failure\n");
-			goto InitError;
+			goto INIT_ERROR;
 		}
-		if(response.r7.respByte4 != 0xAA)
+		if( response.r7.respByte4 != 0xAA )
 		{
 			status = sdcCARD_NOT_INIT_FAILURE;
 			printf("SD Card Init - Echo Pattern mismatch\n");
-			goto InitError;
+			goto INIT_ERROR;
 		}
 	}
+	attempts = 0;
 	while(1)
 	{
-		if ( attempts > 100 )
+		if( attempts > 100 )
 		{
 			status = sdcCARD_NOT_INIT_FAILURE;
 			printf("SD Card Init - OP_COND Failed\n");
-			goto InitError;
+			goto INIT_ERROR;
 		}
 		Delayms(10);
 		attempts++;
 		response = SD_SendCommand(APP_CMD, 0);
-		if ( response.r1.respByte > 0x01 )
+		if( response.r1.respByte > 0x01 )
 		{
 			continue;
 		}
 		response = SD_SendCommand(SEND_OP_COND, 0x40000000);
-		if ( response.r1.respByte == 0x00 )
+		if(( response.r1.respByte & 0x01) == 0x00 )
 		{
 			break;
 		}
 	}
-	response = SD_SendCommand(READ_OCR, 0);
-	if (response.r3.respByte0 > 0x01)
+	attempts = 0;
+	while(1)
 	{
-		status = sdcCARD_NOT_INIT_FAILURE;
-		printf("SD Card Init - Could not read the OCR register\n");
-		goto InitError;
-	}
-	else
-	{
-		gblOCRReg.reg3 = response.r3.respByte1;
-		gblOCRReg.reg2 = response.r3.respByte2;
-		gblOCRReg.reg1 = response.r3.respByte3;
-		gblOCRReg.reg0 = response.r3.respByte4;
-		if ( gblOCRReg.reg3 & 0x80 )
+		Delayms(10);
+		response = SD_SendCommand(READ_OCR, 0);
+		if(response.r3.respByte0 == 0xFF)
 		{
-			printf("SD_CardInit - Card is ready\n");
+			attempts++;
+			if(attempts > 6)
+			{
+				status = sdcCARD_NOT_INIT_FAILURE;
+				printf("SD Card Init - Read OCR Failed to Respond\n");
+				goto INIT_ERROR;
+			}
 		}
 		else
 		{
-			status = sdcCARD_NOT_INIT_FAILURE;
-			printf("SD_CardInit - Card is not ready\n");
-			goto InitError;
+			if( (response.r3.respByte0 & R1_ERROR_MASK) > 0 )
+			{
+				status = sdcCARD_NOT_INIT_FAILURE;
+				printf("SD Card Init - Could not read the OCR register\n");
+				goto INIT_ERROR;
+			}
+			else
+			{
+				gblOCRReg.reg3 = response.r3.respByte1;
+				gblOCRReg.reg2 = response.r3.respByte2;
+				gblOCRReg.reg1 = response.r3.respByte3;
+				gblOCRReg.reg0 = response.r3.respByte4;
+				if( gblOCRReg.reg3 & 0x80 )
+				{
+					printf("SD_CardInit - Card is ready\n");
+					break;
+				}
+			}
 		}
 	}
 	bootState = CARD_INIT;
-	if ( GetMasterBootRecord() == TRUE )
+	if( GetMasterBootRecord() == TRUE )
 	{
 		bootState = BOOT_RECORD;
 	}
@@ -329,7 +369,7 @@ SDC_ERRORS SD_CardInit(void)
 		printf("SD_CardInit - Failed to retrieve master boot record.\n");
 	}
 
-InitError:
+INIT_ERROR:
 
 	return(status);
 }
@@ -352,77 +392,89 @@ SDC_RESPONSE SD_SendCommand(SD_COMMANDS cmd, uint32_t addr)
 	Send8ClockCycles();
 	SPI_CS_Low();
 	Send8ClockCycles();
-	if  ( SPI_Write(commandPacket.commandBuffer, sizeof(commandPacket)) == FALSE )
+	if( SPI_Write(commandPacket.commandBuffer, sizeof(commandPacket)) == FALSE )
 	{
-		response.r1.respByte = SDC_BAD_RESPONSE;
+		response.r1.respByte = SDC_NO_RESPONSE;
 		return response;
 	}
-	if(sdCommandTable[cmd][COM_RESP_TYPE] == R1)
+	if( sdCommandTable[cmd][COM_RESP_TYPE] == R1 )
 	{
-		timeout = 16;
+		timeout = 8;
 		do
 		{
+			response.r1.respByte = 0xFF;
 			SPI_Read( &response.r1.respByte, 1 );
 			timeout--;
-		}while(( response.r1.respByte == 0xFF ) && ( timeout > 0 ));
+		}while( (response.r1.respByte == 0xFF) && (timeout > 0) );
 	}
-	else if ( sdCommandTable[cmd][COM_RESP_TYPE] == R1b)
+	else if( sdCommandTable[cmd][COM_RESP_TYPE] == R1b )
 	{
 		do
 		{
 			SPI_Read(&response.r1.respByte, 1);
 			timeout--;
-		}while((response.r1.respByte == 0xFF)&&(timeout > 0));
+		}while( (response.r1.respByte == 0xFF)&&(timeout > 0) );
 		// The R1b response byte has been read
 		// Wait for not busy status by reading from the card until a byte doesn't equal 00
 		// or a timeout
 		//TODO: I don't like this part. He is overwriting response codes. Unused for now.
 		response.r1.respByte = 0x00;
-		for ( index = 0; index < 0xFF && response.r1.respByte == 0x00; index++ )
+		for( index = 0; index < 0xFF && response.r1.respByte == 0x00; index++ )
 		{
 			do
 			{
 				SPI_Read(&response.r1.respByte, 1);
 				timeout--;
-			}while((response.r1.respByte == 0x00) && (timeout > 0));
+			}while( (response.r1.respByte == 0x00) && (timeout > 0) );
 		}
 	}
-	else if ( sdCommandTable[cmd][COM_RESP_TYPE] == R2)
+	else if( sdCommandTable[cmd][COM_RESP_TYPE] == R2 )
 	{
 		do
 		{
 			SPI_Read(&response.r2.respByte0, 1);
 			timeout--;
-		}while((response.r2.respByte0 == 0xFF) && (timeout > 0));
+		}while( (response.r2.respByte0 == 0xFF) && (timeout > 0) );
 		if( response.r2.respByte0 != 0xFF )
 		{
 			SPI_Read(&response.r2.respByte1, 1);
 		}
 	}
-	else if ( sdCommandTable[cmd][COM_RESP_TYPE] == R3 )
+	else if( sdCommandTable[cmd][COM_RESP_TYPE] == R3 )
 	{
 		do
 		{
+			response.r7.respByte0 = 0xFF;
 			SPI_Read(&response.r3.respByte0, 1);
 			timeout--;
-		}while((response.r3.respByte0 == 0xFF) && (timeout > 0));
-		if( response.r3.respByte0 != 0xFF && (!(response.r3.respByte0 & R1_ILLEGAL_COMMAND)))
+		}while( (response.r3.respByte0 == 0xFF) && (timeout > 0) );
+		if( response.r3.respByte0 != 0xFF && (!(response.r3.respByte0 & R1_ILLEGAL_COMMAND)) )
 		{
+			response.r7.respByte1 = 0xFF;
+			response.r7.respByte2 = 0xFF;
+			response.r7.respByte3 = 0XFF;
+			response.r7.respByte4 = 0xFF;
 			SPI_Read(&response.r3.respByte1, 1);
 			SPI_Read(&response.r3.respByte2, 1);
 			SPI_Read(&response.r3.respByte3, 1);
 			SPI_Read(&response.r3.respByte4, 1);
 		}
 	}
-	else if ( sdCommandTable[cmd][COM_RESP_TYPE] == R7 )
+	else if( sdCommandTable[cmd][COM_RESP_TYPE] == R7 )
 	{
+		timeout = 8;
 		do
 		{
+			response.r7.respByte0 = 0xFF;
 			SPI_Read(&response.r7.respByte0, 1);
 			timeout--;
-		}while((response.r7.respByte0 == 0xFF) && (timeout > 0));
-		if( response.r7.respByte0 != 0xFF && (!(response.r7.respByte0 & R1_ILLEGAL_COMMAND)))
+		}while( (response.r7.respByte0 == 0xFF) && (timeout > 0) );
+		if( response.r7.respByte0 != 0xFF && (!(response.r7.respByte0 & R1_ILLEGAL_COMMAND)) )
 		{
+			response.r7.respByte1 = 0xFF;
+			response.r7.respByte1 = 0xFF;
+			response.r7.respByte1 = 0xFF;
+			response.r7.respByte1 = 0xFF;
 			SPI_Read(&response.r7.respByte1, 1);
 			SPI_Read(&response.r7.respByte2, 1);
 			SPI_Read(&response.r7.respByte3, 1);
@@ -450,22 +502,22 @@ SDC_ERRORS SectorRead(uint32_t sector_num, uint8_t * buffer)
 	SDC_ERRORS status = sdcVALID;
 
 	response = SD_SendCommand(READ_SINGLE_BLOCK, sector_num );
-	if ( response.r1.respByte != SDC_FLOATING_BUS )
+	if( response.r1.respByte != SDC_FLOATING_BUS )
 	{
 		index = 0x61B;
 		do
 		{
 			SPI_WriteRead(&data_token, 1);
 			index--;
-		}while((data_token == SDC_FLOATING_BUS) && (index != 0));
-		if ((index == 0) || (data_token != DATA_START_TOKEN))
+		}while( (data_token == SDC_FLOATING_BUS) && (index != 0) );
+		if( (index == 0) || (data_token != DATA_START_TOKEN) )
 		{
 			status = sdcCARD_TIMEOUT;
 			printf("SectorRead - Timeout\n");
 		}
 		else
 		{
-			for(index = 0; index < SDC_SECTOR_SIZE; index++)
+			for( index = 0; index < SDC_SECTOR_SIZE; index++ )
 			{
 				SPI_WriteRead(&buffer[index], 1);
 			}

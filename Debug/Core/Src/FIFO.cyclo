@@ -1,0 +1,6 @@
+../Core/Src/FIFO.c:26:6:FIFO_Init	2
+../Core/Src/FIFO.c:40:6:ResetFIFOs	3
+../Core/Src/FIFO.c:58:6:RegisterFIFOInput	4
+../Core/Src/FIFO.c:82:6:PutFIFOData	5
+../Core/Src/FIFO.c:108:6:GetFIFOData	7
+../Core/Src/FIFO.c:138:6:ReleaseFIFO	4

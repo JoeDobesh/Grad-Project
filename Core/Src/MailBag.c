@@ -11,6 +11,7 @@
 #define MAX_MESSAGE_COUNT 16
 
 uint32_t mailbagStack[MAILBAG_STACK_SIZE];
+//PCB mailBagPCB;
 
 typedef struct _MAIL_BOX
 {

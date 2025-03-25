@@ -1,0 +1,2 @@
+../Core/Src/Disk/Directories.c:24:15:CacheFileEntry	32	static
+../Core/Src/Disk/Directories.c:183:6:ListRootFiles	552	static

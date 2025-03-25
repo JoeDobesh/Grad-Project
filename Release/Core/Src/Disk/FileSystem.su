@@ -1,0 +1,5 @@
+../Core/Src/Disk/FileSystem.c:27:9:FillFileObject	16	static
+../Core/Src/Disk/FileSystem.c:84:8:FileRead	40	static
+../Core/Src/Disk/FileSystem.c:172:8:FileOpen	24	static
+../Core/Src/Disk/FileSystem.c:229:8:FileClose	0	static
+../Core/Src/Disk/FileSystem.c:239:8:Filefind	32	static

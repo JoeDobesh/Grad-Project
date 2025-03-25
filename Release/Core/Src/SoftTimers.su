@@ -1,0 +1,12 @@
+../Core/Src/SoftTimers.c:165:13:SoftTimersOneShotTest	8	static
+../Core/Src/SoftTimers.c:157:13:SoftTimersBlinkBlueLED	0	static
+../Core/Src/SoftTimers.c:27:6:SoftTimerInit	12	static
+../Core/Src/SoftTimers.c:41:6:TimerParametersInit	12	static
+../Core/Src/SoftTimers.c:51:9:RegisterTimer	16	static
+../Core/Src/SoftTimers.c:74:6:StartTimer	16	static
+../Core/Src/SoftTimers.c:108:6:CheckTimer	0	static
+../Core/Src/SoftTimers.c:137:6:ReleaseTimer	8	static
+../Core/Src/SoftTimers.c:174:6:StartTimerTest	0	static
+../Core/Src/SoftTimers.c:182:6:TimerTestComplete	0	static
+../Core/Src/SoftTimers.c:195:6:TimerTask	48	static
+../Core/Src/SoftTimers.c:291:6:TimerInterrupt	16	static

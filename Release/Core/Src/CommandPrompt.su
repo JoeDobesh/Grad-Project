@@ -1,0 +1,6 @@
+../Core/Src/CommandPrompt.c:139:13:UART_3_SendString.isra	24	static
+../Core/Src/CommandPrompt.c:489:13:TestMenuTask	32	static
+../Core/Src/CommandPrompt.c:180:13:MainMenuTask	40	static
+../Core/Src/CommandPrompt.c:251:13:RunMenuTask	72	static
+../Core/Src/CommandPrompt.c:361:13:SDCardTask	40	static
+../Core/Src/CommandPrompt.c:159:6:CommandPrompt	24	static
