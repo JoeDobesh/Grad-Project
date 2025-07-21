@@ -36,8 +36,9 @@ Core/Src/UserApps/SwitchPowerTask.o: \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/main.h ../Core/Inc/UserApps/LayoutDefinitions.h \
- ../Core/Inc/KernalThread.h ../Core/Inc/Globals.h \
- ../Core/Inc/SoftTimers.h ../Core/Inc/Modbus.h
+ ../Core/Inc/KernalThread.h ../Core/Inc/Globals.h ../Core/Inc/Modbus.h \
+ ../Core/Inc/FIFO.h ../Core/Inc/MailBag.h ../Core/Inc/KernalThread.h \
+ ../Core/Inc/Mutex.h
 ../Core/Inc/UserApps/SwitchPowerTask.h:
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -78,5 +79,8 @@ Core/Src/UserApps/SwitchPowerTask.o: \
 ../Core/Inc/UserApps/LayoutDefinitions.h:
 ../Core/Inc/KernalThread.h:
 ../Core/Inc/Globals.h:
-../Core/Inc/SoftTimers.h:
 ../Core/Inc/Modbus.h:
+../Core/Inc/FIFO.h:
+../Core/Inc/MailBag.h:
+../Core/Inc/KernalThread.h:
+../Core/Inc/Mutex.h:

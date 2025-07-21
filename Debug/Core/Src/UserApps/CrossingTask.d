@@ -36,7 +36,8 @@ Core/Src/UserApps/CrossingTask.o: ../Core/Src/UserApps/CrossingTask.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/main.h ../Core/Inc/UserApps/CrossingTask.h \
  ../Core/Inc/Globals.h ../Core/Inc/UserApps/LayoutDefinitions.h \
- ../Core/Inc/Mutex.h ../Core/Inc/Modbus.h ../Core/Inc/SoftTimers.h
+ ../Core/Inc/Mutex.h ../Core/Inc/Modbus.h ../Core/Inc/FIFO.h \
+ ../Core/Inc/MailBag.h ../Core/Inc/KernalThread.h
 ../Core/Inc/KernalThread.h:
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -79,4 +80,6 @@ Core/Src/UserApps/CrossingTask.o: ../Core/Src/UserApps/CrossingTask.c \
 ../Core/Inc/UserApps/LayoutDefinitions.h:
 ../Core/Inc/Mutex.h:
 ../Core/Inc/Modbus.h:
-../Core/Inc/SoftTimers.h:
+../Core/Inc/FIFO.h:
+../Core/Inc/MailBag.h:
+../Core/Inc/KernalThread.h:

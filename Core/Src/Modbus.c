@@ -9,6 +9,8 @@
 #include "Modbus.h"
 #include "SoftTimers.h"
 #include "Mutex.h"
+#include "FIFO.h"
+#include "MailBag.h"
 
 #define ADU_SIZE			256
 #define ADDRESS_BASE 		0
@@ -151,9 +153,7 @@ static uint32_t writeTimerId;
 static MSG_STRUCT sendMsg;
 static MSG_STRUCT rcvMsg;
 static BOOL messageReceived;
-static uint16_t holdingRegister;
 static BOOL busBusy;
-
 //*****************************************************************************
 // ModbusInit
 //*****************************************************************************
@@ -219,18 +219,18 @@ static uint16_t Calculate16BitCRC(uint8_t * buf, uint8_t len)
 //*****************************************************************************
 // ModbusGetCrossingSensors
 //*****************************************************************************
-uint16_t ModbusGetCrossingSensors(void)
-{
-	return (holdingRegister & 0x000F);
-}
+//uint16_t ModbusGetCrossingSensors(void)
+//{
+//	return (holdingRegister & 0x000F);
+//}
 
 //*****************************************************************************
 // ModbusGetCrossoverSensors
 //*****************************************************************************
-uint16_t ModbusGetCrossoverSensors(void)
-{
-	return (holdingRegister & 0x0070);
-}
+//uint16_t ModbusGetCrossoverSensors(void)
+//{
+//	return (holdingRegister & 0x0070);
+//}
 
 //*****************************************************************************
 // ModebusGetMessage
@@ -255,10 +255,6 @@ static BOOL ModbusSend(void)
 	uint8_t sendBuff[ADU_SIZE];
 	uint8_t bodySize;
 
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
 	bodySize = sendMsg.txDataSize + HEADER_SIZE;
 	memcpy(sendBuff, sendMsg.modBuffer, bodySize);
 	sendBuff[bodySize+1] = (uint8_t)((sendMsg.crc >> 8) & 0x00FF);
@@ -266,6 +262,7 @@ static BOOL ModbusSend(void)
 	if(MutexSpinLock(MUTEX_RS485) == TRUE)
 	{
 		RS485SendString(sendBuff, (sendMsg.txDataSize + HEADER_SIZE + CRC_SIZE));
+		MutexRelease(MUTEX_RS485);
 	}
 	messageReceived = FALSE;
 
@@ -273,270 +270,123 @@ static BOOL ModbusSend(void)
 }
 
 //*****************************************************************************
-// ModbusTask
+// ModbusParseInputs
 //*****************************************************************************
-void ModbusTask(void)
+static uint16_t ModbusParseInputs(uint8_t * inputs, uint8_t size)
 {
+	uint16_t temp;
+	uint16_t retVal = 0;
+	uint8_t index;
+	uint8_t counter = 0;
+
+	for(index = 1; index <= size; index += 2)
+	{
+		temp = inputs[index] << 8;
+		temp = temp | inputs[index + 1];
+		if(temp > 0)
+		{
+			retVal = retVal | (0x0001 << counter);
+		}
+		counter++;
+	}
+
+	return retVal;
+}
+
+//*****************************************************************************
+// ModbusParseResponse
+//*****************************************************************************
+static BOOL ModbusParseResponse(MSG_STRUCT * sentMsgPtr,  MSG_STRUCT * retMsgPtr)
+{
+	EXCEPTION_CODES exception;
+	uint32_t timeout;
 	uint8_t inByte;
 	uint8_t * ch = &inByte;
-	static EXCEPTION_CODES exception;
-	static uint8_t dataCounter;
+	uint8_t dataCounter;
+	uint8_t writeState = WAIT;
+	BOOL retVal = TRUE;
 
-	switch(writeState)
+	timeout = HAL_GetTick() + RESPONSE_TIMEOUT;
+	while(writeState != IDLE)
 	{
-	case IDLE:
-		RS485GetString(ch, 1);
-		break;
-	case WAIT:
-		if(CheckTimer(writeTimerId) == TRUE)
+		switch(writeState)
 		{
-			exception = TimeoutError;
-			writeState = EXCEPTION;
-		}
-		else if(RS485GetString(ch, 1) == TRUE)
-		{
-			rcvMsg.addr = *ch;
-			if(rcvMsg.addr == sendMsg.addr)
+		case IDLE:
+			writeState++;
+			break;
+		case WAIT:
+			if(HAL_GetTick() > timeout)
 			{
-				writeState++;
-			}
-			StartTimer(writeTimerId, RESPONSE_TIMEOUT);
-		}
-		break;
-	case FUNCTION_CODE:
-		if (CheckTimer(writeTimerId) == TRUE)
-		{
-			exception = TimeoutError;
-			writeState = EXCEPTION;
-		}
-		else if(RS485GetString(ch, 1) == TRUE)
-		{
-			rcvMsg.msgType = *ch;
-			if((rcvMsg.msgType & EXCEPTION_MASK) == EXCEPTION_MASK)
-			{
-				exception = *ch;
+				exception = TimeoutError;
 				writeState = EXCEPTION;
 			}
-			else if(rcvMsg.msgType != sendMsg.msgType)
+			else if(RS485GetString(ch, 1) == TRUE)
 			{
-				exception = InvalidFunctionCode;
-				writeState = EXCEPTION;
-			}
-			else if(rcvMsg.msgType >= TOTAL_FUCNTION_CODES)
-			{
-				exception = InvalidFunctionCode;
-				writeState = EXCEPTION;
-			}
-			else
-			{
-				if(rxFunctionPtrTable[rcvMsg.msgType]() == TRUE)
+				retMsgPtr->addr = *ch;
+				if(retMsgPtr->addr == sentMsgPtr->addr)
 				{
-					dataCounter = 0;
-					writeState = CRC_CRC;
-					StartTimer(writeTimerId, RESPONSE_TIMEOUT);
+					writeState++;
 				}
-				else
+				timeout = HAL_GetTick() + RESPONSE_TIMEOUT;
+			}
+			break;
+		case FUNCTION_CODE:
+			if (HAL_GetTick() > timeout)
+			{
+				exception = TimeoutError;
+				writeState = EXCEPTION;
+			}
+			else if(RS485GetString(ch, 1) == TRUE)
+			{
+				retMsgPtr->msgType = *ch;
+				if((retMsgPtr->msgType & EXCEPTION_MASK) == EXCEPTION_MASK)
+				{
+					exception = *ch;
+					writeState = EXCEPTION;
+				}
+				else if(retMsgPtr->msgType != sentMsgPtr->msgType)
 				{
 					exception = InvalidFunctionCode;
 					writeState = EXCEPTION;
 				}
-			}
-		}
-		break;
-	case CRC_CRC:
-		if (CheckTimer(writeTimerId) == TRUE)
-		{
-			exception = TimeoutError;
-			writeState = EXCEPTION;
-		}
-		else if(RS485GetString(ch, 1) == TRUE)
-		{
-			rcvMsg.crc |= ((uint16_t)(*ch)) << (dataCounter * 8);
-			dataCounter++;
-			if(dataCounter > 1)
-			{
-				messageReceived = TRUE;
-				writeState = IDLE;
-			}
-			else
-			{
-				StartTimer(writeTimerId, RESPONSE_TIMEOUT);
-			}
-		}
-		break;
-	case EXCEPTION:
-		RS485GetString(ch, 1);
-		switch(exception)
-		{
-		case TimeoutError:
-			break;
-		case InvalidFunctionCode:
-			break;
-		case InvalidDataAddress:
-			break;
-		case InvalidDataValue:
-			break;
-		case DeviceFailure:
-			break;
-		default:
-			break;
-		}
-		writeState = IDLE;
-		break;
-	default:
-		writeState = IDLE;
-		break;
-	}
-}
-
-BOOL ModbusReadSensors(uint8_t * sensors)
-{
-	static uint32_t timer_id;
-	TIMER_PARAMS timer_params;
-	uint8_t character;
-	uint8_t * ch_ptr = &character;
-	uint8_t msg[16];
-
-	timer_params.callbackFunctionPtr = NULL;
-	timer_params.countTime_ms = 100;
-	timer_params.timerType = ONE_SHOT;
-
-	if(MutexLock(MUTEX_SOFT_TIMER) == FALSE)
-	{
-		return FALSE;
-	}
-	timer_id = RegisterTimer(timer_params);
-	MutexRelease(MUTEX_SOFT_TIMER);
-	if(timer_id == 0)
-	{
-		return FALSE;
-	}
-	RS485GetString(ch_ptr, 1);
-	if(ReadHoldingRegisters(0, 7, 0x01) == FALSE)
-	{
-		ReleaseTimer(timer_id);
-		return FALSE;
-	}
-	StartTimer(timer_id, RESPONSE_TIMEOUT);
-	while(CheckTimer(timer_id) == FALSE)
-	{
-		RS485GetString(msg, 16);
-	}
-
-	rcvMsg.addr = msg[0];
-	rcvMsg.msgType = msg[1];
-	rcvMsg.crc = msg[2];
-	ReleaseTimer(timer_id);
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// ModbusPollSensorTask
-//*****************************************************************************
-void ModbusPollSensorTask(void)
-{
-	uint8_t inByte;
-	uint8_t * ch = &inByte;
-	static EXCEPTION_CODES exception;
-	static uint8_t dataCounter;
-
-	while(TRUE)
-	{
-		switch(readState)
-		{
-		case IDLE:
-			RS485GetString(ch, 1);
-			if(CheckTimer(readTimerId) == TRUE)
-			{
-				if(ReadHoldingRegisters(0, 7, 0x01) == TRUE)
-				{
-					if(ModbusSend() == TRUE)
-					{
-						StartTimer(readTimerId, RESPONSE_TIMEOUT);
-						readState++;
-					}
-					else
-					{
-						StartTimer(readTimerId, POLL_TIMEOUT);
-					}
-				}
-			}
-			break;
-		case WAIT:
-			if(CheckTimer(readTimerId) == TRUE)
-			{
-				exception = TimeoutError;
-				readState = EXCEPTION;
-			}
-			else if(RS485GetString(ch, 1) == TRUE)
-			{
-				rcvMsg.addr = *ch;
-				if(rcvMsg.addr == sendMsg.addr)
-				{
-					readState++;
-				}
-				StartTimer(readTimerId, RESPONSE_TIMEOUT);
-			}
-			break;
-		case FUNCTION_CODE:
-			if(CheckTimer(readTimerId) == TRUE)
-			{
-				exception = TimeoutError;
-				readState = EXCEPTION;
-			}
-			else if(RS485GetString(ch, 1) == TRUE)
-			{
-				rcvMsg.msgType = *ch;
-				if((rcvMsg.msgType & EXCEPTION_MASK) == EXCEPTION_MASK)
-				{
-					exception = *ch;
-					readState = EXCEPTION;
-				}
-				else if(rcvMsg.msgType != sendMsg.msgType)
+				else if(retMsgPtr->msgType >= TOTAL_FUCNTION_CODES)
 				{
 					exception = InvalidFunctionCode;
-					readState = EXCEPTION;
-				}
-				else if(rcvMsg.msgType >= TOTAL_FUCNTION_CODES)
-				{
-					exception = InvalidFunctionCode;
-					readState = EXCEPTION;
+					writeState = EXCEPTION;
 				}
 				else
 				{
-					if(rxFunctionPtrTable[rcvMsg.msgType]() == TRUE)
+					if(rxFunctionPtrTable[retMsgPtr->msgType]() == TRUE)
 					{
 						dataCounter = 0;
-						readState = CRC_CRC;
-						StartTimer(readTimerId, RESPONSE_TIMEOUT);
+						writeState = CRC_CRC;
+						timeout = HAL_GetTick() + RESPONSE_TIMEOUT;
 					}
 					else
 					{
 						exception = InvalidFunctionCode;
-						readState = EXCEPTION;
+						writeState = EXCEPTION;
 					}
 				}
 			}
 			break;
 		case CRC_CRC:
-			if (CheckTimer(readTimerId) == TRUE)
+			if (HAL_GetTick() > timeout)
 			{
 				exception = TimeoutError;
-				readState = EXCEPTION;
+				writeState = EXCEPTION;
 			}
 			else if(RS485GetString(ch, 1) == TRUE)
 			{
-				rcvMsg.crc |= ((uint16_t)(*ch)) << (dataCounter * 8);
+				retMsgPtr->crc |= ((uint16_t)(*ch)) << (dataCounter * 8);
 				dataCounter++;
 				if(dataCounter > 1)
 				{
-					readState = IDLE;
-					StartTimer(readTimerId, POLL_TIMEOUT);
+					writeState = IDLE;
 				}
 				else
 				{
-					StartTimer(readTimerId, RESPONSE_TIMEOUT);
+					timeout = HAL_GetTick() + RESPONSE_TIMEOUT;
 				}
 			}
 			break;
@@ -545,74 +395,120 @@ void ModbusPollSensorTask(void)
 			switch(exception)
 			{
 			case TimeoutError:
-				printf ("Modbus::ModbusPollTask - Timeout Error\r\n");
 				break;
 			case InvalidFunctionCode:
-				printf ("Modbus::ModbusPollTask - Invalid Function Code\r\n");
 				break;
 			case InvalidDataAddress:
-				printf ("Modbus::ModbusPollTask - Invalid Data Address\r\n");
 				break;
 			case InvalidDataValue:
-				printf ("Modbus::ModbusPollTask - Invalid Data Value\r\n");
 				break;
 			case DeviceFailure:
-				printf ("Modbus::ModbusPollTask - Device Failure\r\n");
 				break;
 			default:
 				break;
 			}
-			readState = IDLE;
-			StartTimer(readTimerId, POLL_TIMEOUT);
+			writeState = IDLE;
+			retVal = FALSE;
 			break;
 		default:
-			readState = IDLE;
-			StartTimer(readTimerId, POLL_TIMEOUT);
+			writeState = IDLE;
 			break;
 		}
 	}
+
+	return retVal;
 }
-//*****************************************************************************
-// ReadCoils - 1
-//*****************************************************************************
-//BOOL ReadCoils(uint16_t start, uint16_t num, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = READ_COILS;
-//	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
-//	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-//	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-//	sendMsg.txDataSize = 4;
-
-//	return ModbusSend();
-//}
 
 //*****************************************************************************
-// ReadDescreteInputs - 2
+// ModbusTask
 //*****************************************************************************
-//BOOL ReadDescreteInputs(uint16_t start, uint16_t num, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = READ_DESCRETE_INPUTS;
-//	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
-//	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-//	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-//	sendMsg.txDataSize = 4;
+void ModbusTask(void)
+{
+	uint16_t sensorData;
+	uint16_t crossingData;
+	uint16_t crossoverData;
+	uint8_t inByte;
+	BOOL error;
 
-//	return ModbusSend();
-//}
+	TIMER_PARAMS timerParams;
+	uint8_t timerId;
+
+	timerParams.callbackFunctionPtr = NULL;
+	timerParams.countTime_ms        = POLL_TIMEOUT;
+	timerParams.timerType           = ONE_SHOT;
+
+	if(RegisterFIFOInput(CROSSING_IN_ID) == FALSE)
+	{
+		printf("Crossing Task Init - Failed: RegisterFIFOInput");
+		while(TRUE){;}
+	}
+	if(RegisterFIFOInput(CROSSOVER_IN_ID) == FALSE)
+	{
+		printf("Crossing Task Init - Failed: RegisterFIFOInput");
+		while(TRUE){;}
+	}
+	timerId = RegisterTimer(timerParams);
+	if(timerId == 0)
+	{
+		printf("Modbus Init - Failed: RegisterTimer");
+		while(TRUE){;}
+	}
+	if(StartTimer(timerId, timerParams.countTime_ms) == FALSE)
+	{
+		printf("Modbus Init - Failed: StartTimer");
+		while(TRUE){;}
+	}
+	while(TRUE)
+	{
+		if(CheckTimer(timerId) == TRUE)
+		{
+			RS485GetString(&inByte, 1);
+			writeState = WAIT;
+			if(ReadHoldingRegisters(0x81, 7, 0x01) == TRUE)
+			{
+				if(ModbusParseResponse(&sendMsg, &rcvMsg) == TRUE)
+				{
+					sensorData = ModbusParseInputs(rcvMsg.data, rcvMsg.rxDataSize);
+					MutexSpinLock(MUTEX_FIFO);
+					error = PutFIFOData(CROSSING_IN_ID, sensorData);
+					MutexRelease(MUTEX_FIFO);
+					if( error == FALSE)
+					{
+						printf("Modbus Task Init - Failed: PutFIFOData");
+					}
+					MutexSpinLock(MUTEX_FIFO);
+					error = PutFIFOData(CROSSOVER_IN_ID, sensorData);
+					MutexRelease(MUTEX_FIFO);
+					if(error == FALSE)
+					{
+						printf("Modbus Task Init - Failed: PutFIFOData");
+					}
+					messageReceived = TRUE;
+				}
+			}
+		}
+		if(GetFIFOData(CROSSING_OUT_ID, &crossingData) == TRUE)
+		{
+			if(WriteSingleRegister(0x0000, crossingData, 0x01) == TRUE)
+			{
+				if(ModbusParseResponse(&sendMsg, &rcvMsg) == TRUE)
+				{
+
+				}
+			}
+		}
+//		if(GetFIFOData(CROSSOVER_OUT_ID, &crossoverData) == TRUE)
+//		{
+//			if(WriteSingleRegister(0x0001, crossingData, 0x01) == TRUE)
+//			{
+//				if(ModbusParseResponse(&sendMsg, &rcvMsg) == TRUE)
+//				{
+//
+//				}
+//			}
+//		}
+	}
+}
 
 //*****************************************************************************
 // ReadHoldingRegisters - 3
@@ -632,56 +528,10 @@ BOOL ReadHoldingRegisters(uint16_t start, uint16_t num, uint8_t addr)
 }
 
 //*****************************************************************************
-// ReadInputRegisters - 4
-//*****************************************************************************
-//BOOL ReadInputRegisters(uint16_t start, uint16_t num, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = READ_INPUT_REGISTER;
-//	sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
-//	sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-//	sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-//	sendMsg.txDataSize = 4;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// WriteSingleCoil - 5
-//*****************************************************************************
-//BOOL WriteSingleCoil(uint16_t address, uint16_t value, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = WRITE_SINGLE_COIL;
-//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-//	sendMsg.data[2]    = (uint8_t)((value >> 8) & 0x00FF);
-//	sendMsg.data[3]    = (uint8_t)(value & 0x00FF);;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-//	sendMsg.txDataSize = 4;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
 // WriteSingleRegister - 6
 //*****************************************************************************
 BOOL WriteSingleRegister(uint16_t address, uint16_t value, uint8_t addr)
 {
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
 	sendMsg.addr       = addr;
 	sendMsg.msgType    = WRITE_SINGLE_REGISTER;
 	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
@@ -694,274 +544,23 @@ BOOL WriteSingleRegister(uint16_t address, uint16_t value, uint8_t addr)
 	return ModbusSend();
 }
 
-//*****************************************************************************
-// ReadExceptionStatus - 7
-//*****************************************************************************
-//BOOL ReadExceptionStatus(uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = READ_EXCEPTION_STATUS;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-//	sendMsg.txDataSize = 0;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// Diagnostic - 8
-//*****************************************************************************
-//BOOL Diagnostic(uint16_t sub, uint16_t num, uint8_t addr)
-//{
-//	uint8_t ii;
-
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = DIAGNOSTIC;
-//	sendMsg.data[0]    = (uint8_t)((sub >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(sub & 0x00FF);
-//	for(ii = 0; ii < sub; ii++)
-//	{
-//		sendMsg.data[ii]    = 0;
-//	}
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-//	sendMsg.txDataSize = sub + 4;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// GetComEventCounter - 11
-//*****************************************************************************
-//BOOL GetComEventCounter(uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = GET_COM_EVENT_COUNTER;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-//	sendMsg.txDataSize = 0;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// GetComEventLog - 12
-//*****************************************************************************
-//BOOL GetComEventLog(uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = GET_COM_EVENT_LOG;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-//	sendMsg.txDataSize = 4;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// WriteMultipleCoils - 15
-//*****************************************************************************
-//BOOL WriteMultipleCoils(uint16_t address, uint16_t quantity, uint8_t count, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = WRITE_MULTIPLE_COILS;
-//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-//	sendMsg.data[2]    = (uint8_t)((quantity >> 8) & 0x00FF);
-//	sendMsg.data[3]    = (uint8_t)(quantity & 0x00FF);
-//	sendMsg.data[4]    = count;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 7);
-//	sendMsg.txDataSize = 5;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// WriteMultipleRegisters - 16
-//*****************************************************************************
-//BOOL WriteMultipleRegisters(uint16_t address, uint16_t quantity, uint8_t count, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = WRITE_MULTIPLE_REGISTERS;
-//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-//	sendMsg.data[2]    = (uint8_t)((quantity >> 8) & 0x00FF);
-//	sendMsg.data[3]    = (uint8_t)(quantity & 0x00FF);
-//	sendMsg.data[4]    = count;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 7);
-//	sendMsg.txDataSize = 5;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// ReportSlaveID - 17
-//*****************************************************************************
-//BOOL ReportSlaveID(uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = REPORT_SLAVE_ID;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-//	sendMsg.txDataSize = 0;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// ReadFileRecord - 20
-//*****************************************************************************
-//BOOL ReadFileRecord(uint8_t count, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = READ_FILE_RECORD;
-//	sendMsg.data[0]    = count;
-//	sendMsg.data[1]    = 0x06;
-	//sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-	//sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 4);
-//	sendMsg.txDataSize = 2;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// WriteFileRecord - 21
-//*****************************************************************************
-//BOOL WriteFileRecord(uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = WRITE_FILE_RECORD;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 2);
-//	sendMsg.txDataSize = 0;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// MaskWriteRegister - 22
-//*****************************************************************************
-//BOOL MaskWriteRegister(uint16_t address, uint16_t andMask, uint16_t orMask, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = MASK_WRITE_REGISTER;
-//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-//	sendMsg.data[2]    = (uint8_t)((andMask >> 8) & 0x00FF);
-//	sendMsg.data[3]    = (uint8_t)(andMask & 0x00FF);
-//	sendMsg.data[4]    = (uint8_t)((orMask >> 8) & 0x00FF);
-//	sendMsg.data[5]    = (uint8_t)(orMask & 0x00FF);;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 8);
-//	sendMsg.txDataSize = 6;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// ReadWriteMultipleRegisters - 23
-//*****************************************************************************
-//BOOL ReadWriteMultipleRegisters(uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = READ_WRITE_MULTIPLE_REGISTERS;
-	//sendMsg.data[0]    = (uint8_t)((start >> 8) & 0x00FF);
-	//sendMsg.data[1]    = (uint8_t)(start & 0x00FF);
-	//sendMsg.data[2]    = (uint8_t)((num >> 8) & 0x00FF);
-	//sendMsg.data[3]    = (uint8_t)(num & 0x00FF);;
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 6);
-//	sendMsg.txDataSize = 4;
-	//sendMsg.rxDataSize = 2 + (2 * num);
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// ReadFifoQueue - 24
-//*****************************************************************************
-//BOOL ReadFifoQueue(uint16_t address, uint8_t addr)
-//{
-	//if(state != IDLE)
-	//{
-	//	return FALSE;
-	//}
-//	sendMsg.addr       = addr;
-//	sendMsg.msgType    = READ_FIFO_QUEUE;
-//	sendMsg.data[0]    = (uint8_t)((address >> 8) & 0x00FF);
-//	sendMsg.data[1]    = (uint8_t)(address & 0x00FF);
-//	sendMsg.crc        = Calculate16BitCRC(sendMsg.modBuffer, 4);
-//	sendMsg.txDataSize = 2;
-
-//	return ModbusSend();
-//}
-
-//*****************************************************************************
-// RxReadCoils - 1
-//*****************************************************************************
-BOOL RxReadCoils(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxReadDescreteInputs - 2
-//*****************************************************************************
-BOOL RxReadDescreteInputs(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
+BOOL NullFunction(void){return TRUE;}
+BOOL RxReadCoils(void){return TRUE;}
+BOOL RxReadDescreteInputs(void){return TRUE;}
+BOOL RxReadInputRegisters(void){return TRUE;}
+BOOL RxWriteSingleCoil(void){return TRUE;}
+BOOL RxReadExceptionStatus(void){return TRUE;}
+BOOL RxDiagnostic(void){return TRUE;}
+BOOL RxGetComEventCounter(void){return TRUE;}
+BOOL RxGetComEventLog(void){return TRUE;}
+BOOL RxWriteMultipleCoils(void){return TRUE;}
+BOOL RxWriteMultipleRegisters(void){return TRUE;}
+BOOL RxReportSlaveID(void){return TRUE;}
+BOOL RxReadFileRecord(void){return TRUE;}
+BOOL RxWriteFileRecord(void){return TRUE;}
+BOOL RxMaskWriteRegister(void){return TRUE;}
+BOOL RxReadWriteMultipleRegisters(void){return TRUE;}
+BOOL RxReadFifoQueue(void){return TRUE;}
 
 //*****************************************************************************
 // RxReadHoldingRegisters - 3
@@ -969,53 +568,17 @@ BOOL RxReadDescreteInputs(void)
 BOOL RxReadHoldingRegisters(void)
 {
 	uint8_t ch;
-	uint8_t byteCount, ii;
+	uint8_t ii;
 
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-	byteCount = ch;
-	for(ii = 0; ii < byteCount; ii++)
+	for(ii = 0; ii < 14; ii++)
 	{
 		if(RS485GetString(&ch, 1) == FALSE)
 		{
 			return FALSE;
 		}
 		rcvMsg.data[ii] = ch;
-		holdingRegister = ch;
 	}
-	rcvMsg.rxDataSize = byteCount;
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxReadInputRegisters - 4
-//*****************************************************************************
-BOOL RxReadInputRegisters(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxWriteSingleCoil - 5
-//*****************************************************************************
-BOOL RxWriteSingleCoil(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
+	rcvMsg.rxDataSize = 14;
 
 	return TRUE;
 }
@@ -1039,196 +602,6 @@ BOOL RxWriteSingleRegister(void)
 	rcvMsg.rxDataSize = 4;
 
 	return TRUE;
-}
-
-//*****************************************************************************
-// RxReadExceptionStatus - 7
-//*****************************************************************************
-BOOL RxReadExceptionStatus(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxDiagnostic - 8
-//*****************************************************************************
-BOOL RxDiagnostic(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxGetComEventCounter - 11
-//*****************************************************************************
-BOOL RxGetComEventCounter(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxGetComEventLog
-//*****************************************************************************
-BOOL RxGetComEventLog(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxWriteMultipleCoils
-//*****************************************************************************
-BOOL RxWriteMultipleCoils(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxWriteMultipleRegisters
-//*****************************************************************************
-BOOL RxWriteMultipleRegisters(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxReportSlaveID
-//*****************************************************************************
-BOOL RxReportSlaveID(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxReadFileRecord
-//*****************************************************************************
-BOOL RxReadFileRecord(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxWriteFileRecord
-//*****************************************************************************
-BOOL RxWriteFileRecord(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxMaskWriteRegister
-//*****************************************************************************
-BOOL RxMaskWriteRegister(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxReadWriteMultipleRegisters
-//*****************************************************************************
-BOOL RxReadWriteMultipleRegisters(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// RxReadFifoQueue
-//*****************************************************************************
-BOOL RxReadFifoQueue(void)
-{
-	uint8_t ch;
-
-	if(RS485GetString(&ch, 1) == FALSE)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-//*****************************************************************************
-// NullFunction
-//*****************************************************************************
-BOOL NullFunction(void)
-{
-	printf("NullFunction - If you got here, something is really wrong\n");
-
-	return FALSE;
 }
 
 // EOF

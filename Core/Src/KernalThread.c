@@ -43,7 +43,6 @@ extern IWDG_HandleTypeDef hiwdg;
 
 extern struct netif gnetif;
 extern uint32_t modbusStack[];
-extern uint32_t speedControlStack[];
 extern uint32_t crossingStack[];
 extern uint32_t crossoverStack[];
 
@@ -55,7 +54,6 @@ typedef struct _QUEUES_
 } QUEUE;
 
 PCB kernelPCB;
-//PCB serverPCB;
 uint32_t kernelStack[64];
 static BOOL enableSwitching = FALSE;
 static QUEUE readyQueue;
@@ -88,7 +86,7 @@ void KernelTask(void)
 //*****************************************************************************
 BOOL TimeToContextSwitch(void)
 {
-	HAL_IWDG_Refresh(&hiwdg);
+	//HAL_IWDG_Refresh(&hiwdg);
 	if(enableSwitching == FALSE)
 	{
 		return FALSE;
@@ -261,14 +259,14 @@ static void KernalThreadInit(void)
 	{
 		printf("Command Prompt Task Load Failure\n");
 	}
-	if(LoadProcess(ServerTask, &serverStack[0], /*&serverPCB,*/ SERVER_TASK_STACK_SIZE) == FALSE)
+//	if(LoadProcess(ServerTask, &serverStack[0], /*&serverPCB,*/ SERVER_TASK_STACK_SIZE) == FALSE)
+//	{
+//		printf("Server Task Load Failure\n");
+//	}
+	if(LoadProcess(ModbusTask, &modbusStack[0], MODBUS_STACK_SIZE) == FALSE)
 	{
-		printf("Server Task Load Failure\n");
+		printf("Modbus Task Load Failure\n");
 	}
-	//if(LoadProcess(ModbusTask, &modbusStack[0], MODBUS_STACK_SIZE) == FALSE)
-	//{
-	//	printf("Modbus Task Load Failure\n");
-	//}
 	if(LoadProcess(CrossingTask, &crossingStack[0], CROSSING_STACK_SIZE) == FALSE)
 	{
 		printf("Crossing Task Load Failure\n");
@@ -296,7 +294,9 @@ void KernalTask(void)
 	enableSwitching = FALSE;
 	MutexInit();
 	FIFO_Init();
+	MailBagInit();
 	SoftTimerInit();
+	RS485Init();
 	EnableAllInterrupts();
 	if( SD_CardInit() != sdcVALID)
 	{
@@ -312,9 +312,6 @@ void KernalTask(void)
 	DisableAllInterrupts();
 	HttpdSsiInit();
 	HttpdCgiInit();
-	RS485Init();
-	ModbusInit();
-	PowerControlInit();
 	KernalThreadInit();
 	quantumCounter = 0;
 	enableSwitching = TRUE;

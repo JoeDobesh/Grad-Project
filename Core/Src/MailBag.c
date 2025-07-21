@@ -6,12 +6,12 @@
  */
 
 #include "MailBag.h"
+#include "Mutex.h"
 
 #define MAX_MAIL_BOXES 16
 #define MAX_MESSAGE_COUNT 16
 
 uint32_t mailbagStack[MAILBAG_STACK_SIZE];
-//PCB mailBagPCB;
 
 typedef struct _MAIL_BOX
 {
@@ -29,7 +29,7 @@ static MAIL_BOX mailBoxes[MAX_MAIL_BOXES];
 //*****************************************************************************
 // MailBagInit
 //*****************************************************************************
-static void MailBagInit(void)
+void MailBagInit(void)
 {
 	for(int i = 0; i < MAX_MAIL_BOXES; i++)
 	{
@@ -50,7 +50,6 @@ static void MailBagInit(void)
 			mailBoxes[i].outBox[j].sender = 0;
 		}
 	}
-	printf("MailBagInit - Passed\n");
 }
 
 //*****************************************************************************
@@ -212,13 +211,12 @@ BOOL RetrieveMessage(MESSAGE *myMessage)
 void MailbagTask(void)
 {
 	uint32_t tempAddress;
-	BOOL exit = FALSE;
 
-	MailBagInit();
-	while(exit == FALSE)
+	while(TRUE)
 	{
 		for ( int i = 0; i < MAX_MAIL_BOXES; i++)
 		{
+			MutexSpinLock(MUTEX_MAILBOX);
 			if(mailBoxes[i].txHeadCounter == mailBoxes[i].txTailCounter)
 			{
 				continue;
@@ -246,6 +244,7 @@ void MailbagTask(void)
 					break;
 				}
 			}
+			MutexRelease(MUTEX_MAILBOX);
 		}
 	}
 }

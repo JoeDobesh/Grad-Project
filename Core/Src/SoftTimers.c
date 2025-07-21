@@ -45,6 +45,7 @@ void TimerParametersInit(TIMER_PARAMS* parameters)
 //*****************************************************************************
 uint8_t RegisterTimer(TIMER_PARAMS parameters)
 {
+	HAL_NVIC_DisableIRQ(TIM3_IRQn);
 	for(uint8_t i = 0; i < TIMER_SIZE; i++)
 	{
 		if(softTimers[i].registered == FALSE)
@@ -55,9 +56,11 @@ uint8_t RegisterTimer(TIMER_PARAMS parameters)
 			softTimers[i].counter = 0;
 			softTimers[i].active = FALSE;
 			softTimers[i].registered = TRUE;
+			HAL_NVIC_EnableIRQ(TIM3_IRQn);
 			return (i + 1);
 		}
 	}
+	HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	printf ("SoftTimers::GetTimer - Ran Out Of Timers\r\n");
 
 	return 0;
@@ -84,11 +87,8 @@ BOOL StartTimer(uint8_t index, uint64_t time)
 	{
 		return TRUE;
 	}
-	else
-	{
-		softTimers[index-1].params.countTime_ms = (time < 10)? 1: (time/10);
-	}
 	HAL_NVIC_DisableIRQ(TIM3_IRQn);
+	softTimers[index-1].params.countTime_ms = (time < 10)? 1: (time/10);
 	//I did this so the interrupt would not fire so often
 	softTimers[index-1].counter = softTimers[index-1].params.countTime_ms;
 	softTimers[index-1].active = TRUE;

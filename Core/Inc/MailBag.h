@@ -15,6 +15,10 @@ extern "C" {
 #include "Globals.h"
 #include "KernalThread.h"
 
+#define CROSSING_ADDR 1
+#define CROSSOVER_ADDR 2
+#define MODBUS_ADDR 3
+
 #define MAX_MESSAGE_SIZE 256
 #define MAILBAG_STACK_SIZE 1000
 
@@ -29,6 +33,7 @@ typedef struct _MESSAGE
 	char* messagePtr;
 }MESSAGE;
 
+void MailBagInit(void);
 uint32_t RegisterMailBox(uint32_t myAddress);
 BOOL ReleaseMailBox(int addr);
 BOOL SendMessage(MESSAGE myMessage);

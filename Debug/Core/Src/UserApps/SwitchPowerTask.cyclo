@@ -1,8 +1,7 @@
-../Core/Src/UserApps/SwitchPowerTask.c:38:13:SetLoopPolarity	2
-../Core/Src/UserApps/SwitchPowerTask.c:51:13:SetMainPolarity	2
-../Core/Src/UserApps/SwitchPowerTask.c:125:13:GetSensorStatus	4
-../Core/Src/UserApps/SwitchPowerTask.c:91:6:CloseSwitch	3
-../Core/Src/UserApps/SwitchPowerTask.c:104:6:OpenSwitch	3
-../Core/Src/UserApps/SwitchPowerTask.c:64:13:SwitchPowerInit	2
-../Core/Src/UserApps/SwitchPowerTask.c:117:15:GetSwitchStatus	1
-../Core/Src/UserApps/SwitchPowerTask.c:157:6:SwitchPowerTask	12
+../Core/Src/UserApps/SwitchPowerTask.c:39:13:SetLoopPolarity	2
+../Core/Src/UserApps/SwitchPowerTask.c:52:13:SetMainPolarity	2
+../Core/Src/UserApps/SwitchPowerTask.c:80:6:CloseSwitch	3
+../Core/Src/UserApps/SwitchPowerTask.c:93:6:OpenSwitch	3
+../Core/Src/UserApps/SwitchPowerTask.c:65:13:SwitchPowerInit	1
+../Core/Src/UserApps/SwitchPowerTask.c:106:15:GetSwitchStatus	1
+../Core/Src/UserApps/SwitchPowerTask.c:114:6:SwitchPowerTask	14

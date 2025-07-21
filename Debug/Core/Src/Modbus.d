@@ -35,7 +35,8 @@ Core/Src/Modbus.o: ../Core/Src/Modbus.c ../Core/Inc/RS485.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/main.h ../Core/Inc/Modbus.h ../Core/Inc/SoftTimers.h \
- ../Core/Inc/Mutex.h
+ ../Core/Inc/Mutex.h ../Core/Inc/FIFO.h ../Core/Inc/MailBag.h \
+ ../Core/Inc/KernalThread.h
 ../Core/Inc/RS485.h:
 ../Core/Inc/Globals.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -76,3 +77,6 @@ Core/Src/Modbus.o: ../Core/Src/Modbus.c ../Core/Inc/RS485.h \
 ../Core/Inc/Modbus.h:
 ../Core/Inc/SoftTimers.h:
 ../Core/Inc/Mutex.h:
+../Core/Inc/FIFO.h:
+../Core/Inc/MailBag.h:
+../Core/Inc/KernalThread.h:

@@ -1,6 +1,6 @@
-../Core/Src/UserApps/CrossingTask.c:49:13:CrossingInit	2
-../Core/Src/UserApps/CrossingTask.c:72:9:GetSersorValues	1
-../Core/Src/UserApps/CrossingTask.c:80:6:CrossingTask	18
-../Core/Src/UserApps/CrossingTask.c:174:6:SelectCrossing	2
-../Core/Src/UserApps/CrossingTask.c:188:9:GetCrossing	1
-../Core/Src/UserApps/CrossingTask.c:196:6:GetGateStatus	1
+../Core/Src/UserApps/CrossingTask.c:49:13:CrossingInit	1
+../Core/Src/UserApps/CrossingTask.c:61:9:GetSersorValues	1
+../Core/Src/UserApps/CrossingTask.c:69:6:CrossingTask	18
+../Core/Src/UserApps/CrossingTask.c:169:6:SelectCrossing	2
+../Core/Src/UserApps/CrossingTask.c:183:9:GetCrossing	1
+../Core/Src/UserApps/CrossingTask.c:191:6:GetGateStatus	1

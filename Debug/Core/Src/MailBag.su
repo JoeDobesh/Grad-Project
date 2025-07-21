@@ -1,7 +1,7 @@
-../Core/Src/MailBag.c:59:13:ResetMailBox	16	static
-../Core/Src/MailBag.c:32:13:MailBagInit	16	static
-../Core/Src/MailBag.c:85:10:RegisterMailBox	0	static
-../Core/Src/MailBag.c:113:6:ReleaseMailBox	8	static
-../Core/Src/MailBag.c:135:6:SendMessage	48	static
-../Core/Src/MailBag.c:177:6:RetrieveMessage	24	static
-../Core/Src/MailBag.c:212:6:MailbagTask	40	static
+../Core/Src/MailBag.c:58:13:ResetMailBox	16	static
+../Core/Src/MailBag.c:32:6:MailBagInit	12	static
+../Core/Src/MailBag.c:84:10:RegisterMailBox	0	static
+../Core/Src/MailBag.c:112:6:ReleaseMailBox	8	static
+../Core/Src/MailBag.c:134:6:SendMessage	48	static
+../Core/Src/MailBag.c:176:6:RetrieveMessage	24	static
+../Core/Src/MailBag.c:211:6:MailbagTask	40	static

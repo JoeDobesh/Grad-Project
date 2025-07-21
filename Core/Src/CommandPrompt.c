@@ -23,15 +23,13 @@ extern RTC_HandleTypeDef hrtc;
 
 uint32_t commandPromptStack[COMMAND_PROMPT_STACK_SIZE];
 
-//PCB commandPromptPCB;
-
 static uint8_t cpState, testState;
 static uint8_t runState, sdState, rtcState;
 static char inputBuffer[INPUT_BUFFER_SIZE];
 
 static const char mainMenu[] = {
 "\n \
-Help Menu\n \
+Main Menu\n \
 help - Displays this menu\n \
 run  - Sends you to the railroad manual run menu\n \
 sd   - Mounts the SD Card\n \
@@ -46,7 +44,7 @@ Enter the number of the feature you would like to override\n \
 Return To The Main Menu  - 0\n \
 Run Speed Control        - 1\n \
 Run Crossing Control     - 2\n \
-Run Switch Power Control - 3\n \
+Run Track Switch Control - 3\n \
 \n"
 };
 
@@ -61,7 +59,7 @@ cat <file> - Display the selected file \
 
 static const char rtcMenu[] = {
 "\n \
-Return To The Main Menu - 0\n \
+Return To Main Menu 	- 0\n \
 Get RTC Time            - 1\n \
 Get RTC Date            - 2\n \
 Set RTC Time            - 3\n \
@@ -192,7 +190,7 @@ void CommandPrompt(void)
 //*****************************************************************************
 static void MainMenuTask(void)
 {
-	char str1[] = "Grad Project>>";
+	char str1[] = "UTOS>>";
 	static uint32_t inputBuffCounter;
 	HAL_StatusTypeDef status;
 	size_t size = sizeof(str1);
@@ -511,7 +509,7 @@ static BOOL SetDate(void);
 static void RtcMenuTask(void)
 {
 	HAL_StatusTypeDef status;
-	char str1[] = "rtc>>";
+	char str1[] = "RTC>>";
 	char ch;
 	size_t size = sizeof(str1);
 	static uint32_t inputBuffCounter;
@@ -590,9 +588,11 @@ static void RtcMenuTask(void)
 static void GetTime(void)
 {
 	RTC_TimeTypeDef sTime;
-	char buffer[25];
+	RTC_DateTypeDef sDate;
+	char buffer[30];
 
 	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 	sprintf(buffer, "Current Time: %02d:%02d:%02d\n", sTime.Hours, sTime.Minutes, sTime.Seconds);
 	HAL_UART_Transmit(&huart3, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 }
@@ -602,9 +602,11 @@ static void GetTime(void)
 //*****************************************************************************
 static void GetDate(void)
 {
+	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
-	char buffer[25];
+	char buffer[30];
 
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
 	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 	sprintf(buffer, "Current Date: %02d-%02d-%02d\n", sDate.Month, sDate.Date, sDate.Year);
 	HAL_UART_Transmit(&huart3, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
@@ -631,9 +633,10 @@ static BOOL SetTime(void)
 	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
 	if(HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
 	{
-		HAL_UART_Transmit(&huart3, (uint8_t *)"SetTime Failed - Invalid Format\n", 32, HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart3, (uint8_t *)"\nSetTime Failed - Invalid Format\n", 32, HAL_MAX_DELAY);
 		return FALSE;
 	}
+	HAL_UART_Transmit(&huart3, (uint8_t *)"\n", 1, HAL_MAX_DELAY);
 
 	return TRUE;
 }
@@ -654,15 +657,16 @@ static BOOL SetDate(void)
 	sDate.Date = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
 	HAL_UART_Transmit(&huart3, (uint8_t *)"\nEnter Weekday (1-Mon, 7=Sun): ", 32, HAL_MAX_DELAY);
 	HAL_UART_Receive(&huart3, buffer, 1, HAL_MAX_DELAY);
-	sDate.WeekDay = (buffer[0] - '0');
+	sDate.WeekDay = buffer[0] - '0';
 	HAL_UART_Transmit(&huart3, (uint8_t *)"\nEnter Year 20(00-99): ", 24, HAL_MAX_DELAY);
 	HAL_UART_Receive(&huart3, buffer, 2, HAL_MAX_DELAY);
 	sDate.Year = ((buffer[0] - '0') * 10) + (buffer[1] - '0');
 	if(HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
 	{
-		HAL_UART_Transmit(&huart3, (uint8_t *)"SetDate Failed - Invalid Format\n", 32, HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart3, (uint8_t *)"\nSetDate Failed - Invalid Format\n", 32, HAL_MAX_DELAY);
 		return FALSE;
 	}
+	HAL_UART_Transmit(&huart3, (uint8_t *)"\n", 1, HAL_MAX_DELAY);
 
 	return TRUE;
 }

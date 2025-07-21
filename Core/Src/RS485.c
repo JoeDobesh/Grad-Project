@@ -65,6 +65,7 @@ BOOL RS485SendString(uint8_t * data,  size_t size)
 		case HAL_BUSY:
 		case HAL_TIMEOUT:
 		default:
+			printf("RS85SendString - Failed");
 			HAL_GPIO_WritePin(RS485_REN_DEN_GPIO_Port, RS485_REN_DEN_Pin, GPIO_PIN_RESET);
 			break;
 	}
@@ -78,24 +79,30 @@ BOOL RS485SendString(uint8_t * data,  size_t size)
 BOOL RS485GetString(uint8_t * data, size_t size)
 {
 	uint16_t counter = 0;
+	BOOL retVal = TRUE;
 
 	if(size >= CIRCULAR_BUFFER_SIZE || size <= 0)
 	{
 		return FALSE;
 	}
+	HAL_NVIC_DisableIRQ(UART4_IRQn);
 	if(rxBuffPushIndex == rxBuffPullIndex)
 	{
-		return FALSE;
+		retVal = FALSE;
 	}
-	while(counter < size && rxBuffPushIndex != rxBuffPullIndex)
+	else
 	{
-		data[counter] = circularRxBuffer[rxBuffPullIndex];
-		counter++;
-		rxBuffPullIndex++;
-		rxBuffPullIndex = (rxBuffPullIndex >= CIRCULAR_BUFFER_SIZE)? 0: rxBuffPullIndex;
+		while(counter < size && rxBuffPushIndex != rxBuffPullIndex)
+		{
+			data[counter] = circularRxBuffer[rxBuffPullIndex];
+			counter++;
+			rxBuffPullIndex++;
+			rxBuffPullIndex = (rxBuffPullIndex >= CIRCULAR_BUFFER_SIZE)? 0: rxBuffPullIndex;
+		}
 	}
+	HAL_NVIC_EnableIRQ(UART4_IRQn);
 
-	return TRUE;
+	return retVal;
 }
 
 //*****************************************************************************
@@ -111,11 +118,14 @@ void RS485TxInterrupt(void)
 //*****************************************************************************
 void RS485RxInterrupt(uint16_t length)
 {
+	uint16_t counter;
+
 	if (rxBuffPushIndex == length)
 	{
 		return;
 	}
-	while(rxBuffPushIndex != length)
+	//while(rxBuffPushIndex != length)
+	for(counter = 0; counter < length; counter++)
 	{
 		circularRxBuffer[rxBuffPushIndex] = circularDMABuffer[rxBuffPushIndex];
 		rxBuffPushIndex++;

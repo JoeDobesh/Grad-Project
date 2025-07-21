@@ -193,7 +193,7 @@ int main(void)
   MX_TIM2_Init();
   MX_LWIP_Init();
   MX_RTC_Init();
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
@@ -205,7 +205,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_IWDG_Refresh(&hiwdg);
+	  //HAL_IWDG_Refresh(&hiwdg);
 	  printf("Starting Kernel Task\n");
 	  KernalTask();
     /* USER CODE END WHILE */

@@ -53,7 +53,7 @@ BOOL MutexSpinLock(RESOURCES resource)
 	{
 		return FALSE;
 	}
-	while(myMutexes[resource] == LOCKED);
+	while(myMutexes[resource] == LOCKED){;}
 	myMutexes[resource] = LOCKED;
 
 	return TRUE;

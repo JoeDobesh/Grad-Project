@@ -6,16 +6,17 @@
  */
 
 #include <FIFO.h>
+#include "KernalThread.h"
 
 #define FIFO_SIZE 16
 #define FIFO_COUNT 8
 
 typedef struct _FIFO
 {
-	int FIFO_ID;
-	unsigned int inputCounter;
-	unsigned int outputCounter;
-	double* FIFO_Ptr;
+	uint8_t FIFO_ID;
+	uint16_t inputCounter;
+	uint16_t outputCounter;
+	uint16_t * FIFO_Ptr;
 }FIFO;
 
 static FIFO fifo[FIFO_COUNT];
@@ -55,39 +56,47 @@ void ResetFIFOs(void)
 //*****************************************************************************
 // RegisterFIFOInput
 //*****************************************************************************
-BOOL RegisterFIFOInput(int id)
+BOOL RegisterFIFOInput(uint8_t id)
 {
+	BOOL retVal = FALSE;
+
+	DisableAllInterrupts();
 	for(int i = 0; i < FIFO_COUNT; i++)
 	{
 		if(fifo[i].FIFO_ID == 0)
 		{
-			fifo[i].FIFO_Ptr = (double*)malloc(FIFO_SIZE);
+			fifo[i].FIFO_Ptr = malloc(FIFO_SIZE);
 			if(fifo[i].FIFO_Ptr == NULL)
 			{
-				return FALSE;
+				return retVal;
 			}
 			fifo[i].FIFO_ID = id;
 			fifo[i].inputCounter = 0;
 			fifo[i].outputCounter = 0;
-			return TRUE;
+			retVal = TRUE;
+			break;
 		}
 	}
+	EnableAllInterrupts();
 
-	return FALSE;
+	return retVal;
 }
 
 //*****************************************************************************
 // PutFIFOData
 //*****************************************************************************
-BOOL PutFIFOData(int id, double data)
+BOOL PutFIFOData(uint8_t id, uint16_t data)
 {
+	BOOL retVal = FALSE;
+
+	DisableAllInterrupts();
 	for(int i = 0; i < FIFO_COUNT; i++)
 	{
 		if(fifo[i].FIFO_ID == id)
 		{
 			if(fifo[i].FIFO_Ptr == NULL)
 			{
-				return FALSE;
+				return retVal;
 			}
 			fifo[i].FIFO_Ptr[fifo[i].inputCounter] = data;
 			fifo[i].inputCounter++;
@@ -95,29 +104,34 @@ BOOL PutFIFOData(int id, double data)
 			{
 				fifo[i].inputCounter = 0;
 			}
-			return TRUE;
+			retVal = TRUE;
+			break;
 		}
 	}
+	EnableAllInterrupts();
 
-	return FALSE;
+	return retVal;
 }
 
 //*****************************************************************************
 // GetFIFOData
 //*****************************************************************************
-BOOL GetFIFOData(int id, double* data)
+BOOL GetFIFOData(uint8_t id, uint16_t* data)
 {
+	BOOL retVal = FALSE;
+
+	DisableAllInterrupts();
 	for(int i = 0; i < FIFO_COUNT; i++)
 	{
 		if(fifo[i].FIFO_ID == id)
 		{
 			if(fifo[i].inputCounter == fifo[i].outputCounter)
 			{
-				return FALSE;
+				return retVal;
 			}
 			if(fifo[i].FIFO_Ptr == NULL)
 			{
-				return FALSE;
+				return retVal;
 			}
 			*data = fifo[i].FIFO_Ptr[fifo[i].outputCounter];
 			fifo[i].outputCounter++;
@@ -125,18 +139,23 @@ BOOL GetFIFOData(int id, double* data)
 			{
 				fifo[i].outputCounter = 0;
 			}
-			return TRUE;
+			retVal = TRUE;
+			break;
 		}
 	}
+	EnableAllInterrupts();
 
-	return FALSE;
+	return retVal;
 }
 
 //*****************************************************************************
 // ReleaseFIFO
 //*****************************************************************************
-BOOL ReleaseFIFO(int id)
+BOOL ReleaseFIFO(uint8_t id)
 {
+	BOOL retVal = FALSE;
+
+	DisableAllInterrupts();
 	for(int i = 0; i < FIFO_COUNT; i++)
 	{
 		if(fifo[i].FIFO_ID == id)
@@ -149,11 +168,13 @@ BOOL ReleaseFIFO(int id)
 			fifo[i].inputCounter = 0;
 			fifo[i].outputCounter = 0;
 			fifo[i].FIFO_ID = 0;
-			return TRUE;
+			retVal = TRUE;
+			break;
 		}
 	}
+	EnableAllInterrupts();
 
-	return FALSE;
+	return retVal;
 }
 
 // EOF

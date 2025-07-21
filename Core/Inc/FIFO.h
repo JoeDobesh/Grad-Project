@@ -14,12 +14,17 @@ extern "C" {
 
 #include "Globals.h"
 
+#define CROSSING_IN_ID   1
+#define CROSSOVER_IN_ID  2
+#define CROSSING_OUT_ID  3
+#define CROSSOVER_OUT_ID 4
+
 void FIFO_Init(void);
 void ResetFIFO(void);
-BOOL RegisterFIFOInput(int id);
-BOOL PutFIFOData(int id, double data);
-BOOL GetFIFOData(int id, double* data);
-BOOL ReleaseFIFO(int id);
+BOOL RegisterFIFOInput(uint8_t id);
+BOOL PutFIFOData(uint8_t id, uint16_t data);
+BOOL GetFIFOData(uint8_t id, uint16_t* data);
+BOOL ReleaseFIFO(uint8_t id);
 
 #ifdef __cplusplus
 }

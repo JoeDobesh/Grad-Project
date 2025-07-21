@@ -1,7 +1,7 @@
 ../Core/Src/SoftTimers.c:23:6:SoftTimerInit	0	static
 ../Core/Src/SoftTimers.c:36:6:TimerParametersInit	0	static
 ../Core/Src/SoftTimers.c:46:9:RegisterTimer	16	static
-../Core/Src/SoftTimers.c:69:6:StartTimer	24	static
+../Core/Src/SoftTimers.c:72:6:StartTimer	16	static
 ../Core/Src/SoftTimers.c:103:6:CheckTimer	0	static
 ../Core/Src/SoftTimers.c:132:6:ReleaseTimer	8	static
 ../Core/Src/SoftTimers.c:152:6:TimerInterrupt	16	static
