@@ -1,0 +1,228 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{14}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[\protect\citeauthoryear{Axelson}{Axelson}{2006}]%
+        {Axelson06}
+\bibfield{author}{\bibinfo{person}{Jan Axelson}.}
+  \bibinfo{year}{2006}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{USB Mass Storage} (\bibinfo{edition}{1st}
+  ed.)}.
+\newblock \bibinfo{publisher}{Lakeview Research LLC}.
+\newblock
+\urldef\tempurl%
+\url{www.janaxelson.com}
+\showURL{%
+\tempurl}
+\newblock
+\shownote{(book).}
+
+
+\bibitem[\protect\citeauthoryear{Eletechsup}{Eletechsup}{[n.d.]}]%
+        {Eletechsup01}
+\bibfield{author}{\bibinfo{person}{Eletechsup}.}
+  \bibinfo{year}{[n.d.]}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{N4D3E16 DC 12V 24V 16 Input 16 Output RS485
+  Remote Control Switch PLC IO expansion Board 03 06 16 Modbus RTU Module}}.
+\newblock
+\urldef\tempurl%
+\url{https://eletechsup.com/products/dc-12v-24v-16-input-16-output-rs485-remote-control-switch-plc-io-expansion-board-03-06-16-modbus-rtu-module}
+\showURL{%
+Retrieved May 7, 2025 from \tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Engineering}{Engineering}{[n.d.]}]%
+        {ISE01}
+\bibfield{author}{\bibinfo{person}{Iowa~Scaled Engineering}.}
+  \bibinfo{year}{[n.d.]}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Train Spotter Rock Solid Train Detection,
+  Reflective Infared Proximity Sensor}}.
+\newblock Iowa Scale Engineering, Iowa, USA.
+\newblock
+\urldef\tempurl%
+\url{https://www.iascaled.com/docs/ckt-irsense/ckt-irsense-manual.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Git}{Git}{[n.d.]}]%
+        {Git01}
+\bibfield{author}{\bibinfo{person}{Git}.} \bibinfo{year}{[n.d.]}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Git Installation Web Site}}.
+\newblock
+\urldef\tempurl%
+\url{https://git-scm.com/book/en/v2/Getting-Started-Installing-Git}
+\showURL{%
+Retrieved October 14, 2025 from \tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Inc.}{Inc.}{2018}]%
+        {Walthers01}
+\bibfield{author}{\bibinfo{person}{Walthers Inc.}}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Walthers Control System, Switch Machine
+  Reference Guide}}.
+\newblock Walthers Inc, Milwaukee, WI.
+\newblock
+\urldef\tempurl%
+\url{https://s3.amazonaws.com/aws.walthers.com/942-101+Switch+Machine+Instruction+Sheet+and+Advance+Control+Manual.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Integrated}{Integrated}{2014}]%
+        {MAX1487}
+\bibfield{author}{\bibinfo{person}{Maxim Integrated}.}
+  \bibinfo{year}{2014}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Low Power, Slew-Rate-Limited RS-485/RS-422
+  Transceivers}}.
+\newblock Maxim Integrated, San Jose, CA.
+\newblock
+\urldef\tempurl%
+\url{https://www.analog.com/media/en/technical-documentation/data-sheets/MAX1487-MAX491.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Microelectronics}{Microelectronics}{[n.d.]}]%
+        {STMicro01}
+\bibfield{author}{\bibinfo{person}{ST Microelectronics}.}
+  \bibinfo{year}{[n.d.]}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{ST Microelectronics website}}.
+\newblock
+\urldef\tempurl%
+\url{https://www.st.com}
+\showURL{%
+Retrieved May 7, 2025 from \tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Microelectronics}{Microelectronics}{2016}]%
+        {Nucleo01}
+\bibfield{author}{\bibinfo{person}{ST Microelectronics}.}
+  \bibinfo{year}{2016}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Getting started with STM32 Nucleo board
+  software development tools}}.
+\newblock ST Microelectronics, France.
+\newblock
+\urldef\tempurl%
+\url{https://www.st.com/resource/en/user_manual/um1727-getting-started-with-stm32-nucleo-board-software-development-tools-stmicroelectronics.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Microelectronics}{Microelectronics}{2023a}]%
+        {HALManual01}
+\bibfield{author}{\bibinfo{person}{ST Microelectronics}.}
+  \bibinfo{year}{2023}\natexlab{a}.
+\newblock \bibinfo{booktitle}{\emph{Description of STM32F4 HAL and low-layer
+  drivers}}.
+\newblock ST Microelectronics, France.
+\newblock
+\urldef\tempurl%
+\url{https://www.st.com/resource/en/user_manual/um1725-description-of-stm32f4-hal-and-lowlayer-drivers-stmicroelectronics.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Microelectronics}{Microelectronics}{2023b}]%
+        {Nucleo02}
+\bibfield{author}{\bibinfo{person}{ST Microelectronics}.}
+  \bibinfo{year}{2023}\natexlab{b}.
+\newblock \bibinfo{booktitle}{\emph{User Manual, STM32 Nucleo-144 Boards
+  (MB1137)}}.
+\newblock ST Microelectronics, France.
+\newblock
+\urldef\tempurl%
+\url{https://www.st.com/resource/en/user_manual/um1727-getting-started-with-stm32-nucleo-board-software-development-tools-stmicroelectronics.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{(NMRA)}{(NMRA)}{2021}]%
+        {DCC01}
+\bibfield{author}{\bibinfo{person}{National Model Railroad~Assoc. (NMRA)}.}
+  \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Electrical Standards for Digital Command
+  Control (DCC)}}.
+\newblock NMRA, Soddy Daisy, TN.
+\newblock
+\urldef\tempurl%
+\url{https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.1_electrical_standards_for_digital_command_control_2021.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Petersen}{Petersen}{[n.d.]}]%
+        {ise02}
+\bibfield{author}{\bibinfo{person}{Nathan~Holmes/Micheal Petersen}.}
+  \bibinfo{year}{[n.d.]}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Reflective IR Model Railroad Sensor (V4),
+  Schematic}}.
+\newblock Iowa Scale Engineering, Iowa, USA.
+\newblock
+\urldef\tempurl%
+\url{https://github.com/IowaScaledEngineering/ckt-irsense/raw/master/pg/ckt-irsense-panel-v4.1-fd210cc/ckt-irsense.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Silberschatz, Galvin, and Gagne}{Silberschatz
+  et~al\mbox{.}}{2013}]%
+        {Silberschatz13}
+\bibfield{author}{\bibinfo{person}{Abraham Silberschatz},
+  \bibinfo{person}{Peter~Baer Galvin}, {and} \bibinfo{person}{Greg Gagne}.}
+  \bibinfo{year}{2013}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Operating System Concepts}
+  (\bibinfo{edition}{9th.} ed.)}.
+\newblock \bibinfo{publisher}{Wiley}, \bibinfo{address}{Hoboken, NJ}.
+\newblock
+
+
+\bibitem[\protect\citeauthoryear{Technologies}{Technologies}{[n.d.]}]%
+        {ARM01}
+\bibfield{author}{\bibinfo{person}{ARM Technologies}.}
+  \bibinfo{year}{[n.d.]}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Official ARM Website}}.
+\newblock
+\urldef\tempurl%
+\url{https://www.arm.com}
+\showURL{%
+Retrieved May 7, 2025 from \tempurl}
+
+
+\end{thebibliography}

@@ -1,0 +1,68 @@
+This is BibTeX, Version 0.99d
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: Joe_Dobesh_Grad_Project_Final_Paper4.aux
+Reallocating 'name_of_file' (item size: 1) to 21 items.
+The style file: ACM-Reference-Format.bst
+Reallocating 'name_of_file' (item size: 1) to 17 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'wiz_functions' (item size: 4) to 6000 items.
+Database file #1: Grad_Project_Bib.bib
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'glb_str_end' (item size: 4) to 20 items.
+Reallocating 'glb_str_ptr' (item size: 4) to 20 items.
+Reallocating 'global_strs' (item size: 1) to 4000000 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Warning--empty address in Axelson06
+Warning--empty year in Eletechsup01
+Warning--empty organization in Eletechsup01
+Warning--empty year in ISE01
+Warning--empty year in Git01
+Warning--empty organization in Git01
+Warning--empty year in STMicro01
+Warning--empty organization in STMicro01
+Warning--empty year in ise02
+Warning--empty year in ARM01
+Warning--empty organization in ARM01
+You've used 14 entries,
+            5897 wiz_defined-function locations,
+            1568 strings with 19111 characters,
+and the built_in function-call counts, 10085 in all, are:
+= -- 1050
+> -- 299
+< -- 0
++ -- 79
+- -- 115
+* -- 658
+:= -- 1232
+add.period$ -- 69
+call.type$ -- 14
+change.case$ -- 74
+chr.to.int$ -- 13
+cite$ -- 25
+duplicate$ -- 882
+empty$ -- 635
+format.name$ -- 119
+if$ -- 2096
+int.to.chr$ -- 3
+int.to.str$ -- 1
+missing$ -- 4
+newline$ -- 202
+num.names$ -- 111
+pop$ -- 330
+preamble$ -- 1
+purify$ -- 160
+quote$ -- 0
+skip$ -- 353
+stack$ -- 0
+substring$ -- 639
+swap$ -- 99
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 384
+warning$ -- 11
+while$ -- 107
+width$ -- 0
+write$ -- 320
+(There were 11 warnings)
