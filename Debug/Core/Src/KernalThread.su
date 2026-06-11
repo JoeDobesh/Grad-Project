@@ -2,6 +2,7 @@
 ../Core/Src/KernalThread.c:128:13:PushLastPCB	0	static
 ../Core/Src/KernalThread.c:155:28:InitialiseStack	0	static
 ../Core/Src/KernalThread.c:78:6:KernelTask	8	static
+../Core/Src/KernalThread.c:66:13:ServerTask	8	static
 ../Core/Src/KernalThread.c:179:13:LoadProcess	24	static
 ../Core/Src/KernalThread.c:240:13:KernalThreadInit	8	static
 ../Core/Src/KernalThread.c:87:6:TimeToContextSwitch	0	static

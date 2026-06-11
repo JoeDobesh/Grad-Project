@@ -259,18 +259,18 @@ static void KernalThreadInit(void)
 	{
 		printf("Command Prompt Task Load Failure\n");
 	}
-//	if(LoadProcess(ServerTask, &serverStack[0], /*&serverPCB,*/ SERVER_TASK_STACK_SIZE) == FALSE)
+	if(LoadProcess(ServerTask, &serverStack[0], /*&serverPCB,*/ SERVER_TASK_STACK_SIZE) == FALSE)
+	{
+		printf("Server Task Load Failure\n");
+	}
+//	if(LoadProcess(ModbusTask, &modbusStack[0], MODBUS_STACK_SIZE) == FALSE)
 //	{
-//		printf("Server Task Load Failure\n");
+//		printf("Modbus Task Load Failure\n");
 //	}
-	if(LoadProcess(ModbusTask, &modbusStack[0], MODBUS_STACK_SIZE) == FALSE)
-	{
-		printf("Modbus Task Load Failure\n");
-	}
-	if(LoadProcess(CrossingTask, &crossingStack[0], CROSSING_STACK_SIZE) == FALSE)
-	{
-		printf("Crossing Task Load Failure\n");
-	}
+//	if(LoadProcess(CrossingTask, &crossingStack[0], CROSSING_STACK_SIZE) == FALSE)
+//	{
+//		printf("Crossing Task Load Failure\n");
+//	}
 	/*
 	if(LoadProcess(SwitchPowerTask, &crossoverStack[0], CROSSOVER_STACK_SIZE) == FALSE)
 	{

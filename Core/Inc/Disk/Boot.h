@@ -15,6 +15,9 @@ extern "C" {
 #include "Globals.h"
 #include "SD_Card.h"
 
+/// <summary>
+/// FS_TYPES - enum that defines the different file system values
+/// </summary>
 typedef enum _FS_TYPES_
 {
 	UNUSED   = 0x00,
@@ -28,11 +31,28 @@ typedef enum _FS_TYPES_
 	EXTlba   = 0x0F
 }FS_TYPES;
 
+/// <summary>
+/// BootInit - Initializes local static variables
+/// </summary>
 void BootInit(void);
+
+/// <summary>
+/// GetMaterBootRecord - Reads the Master Boot Record, Checks for errors, and determines the number of partitions.
+/// </summary>
+/// <returns>BOOL - If an error is found, FALSE is returned. Otherwise TRUE</returns>
 BOOL GetMasterBootRecord(void);
+
+/// <summary>
+/// GetFirstSectorLBA - Reads the Master Boot Record, Checks for errors, and determines the number of partitions.
+/// </summary>
+/// <returns>BOOL - If an error is found, FALSE is returned. Otherwise TRUE</returns>
 uint32_t GetFirstSectorLBA(uint8_t);
+
+
 uint32_t GetTotalSectors(uint8_t);
+
 BOOL IsBootValid(void);
+
 BOOL PrintBootSector(void);
 FS_TYPES GetPartitionType(void);
 
