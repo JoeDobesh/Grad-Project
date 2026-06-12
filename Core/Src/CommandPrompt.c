@@ -9,6 +9,7 @@
 #include "RS485.h"
 #include "CommandPrompt.h"
 #include "SoftTimers.h"
+#include "MailBag.h"
 #include "Modbus.h"
 #include "Disk\Boot.h"
 #include "Disk\Directories.h"
@@ -75,6 +76,7 @@ Return To Main Menu - 0\n \
 Check Boot Sector   - 1\n \
 Check RS-485        - 2\n \
 Check Modbus        - 3\n \
+Test Mail System	- 4\n \
 \n"
 };
 
@@ -691,7 +693,7 @@ static void TestMenuTask(void)
 		testState++;
 		break;
 	case 1:
-		status = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10); //HAL_MAX_DELAY);
+		status = HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 10);
 		if(status == HAL_OK)
 		{
 			if(ch == '\n')
@@ -740,6 +742,18 @@ static void TestMenuTask(void)
 		else if(strcmp(inputBuffer, "3") == 0)
 		{
 			ReadHoldingRegisters(1, 1, 1);
+			testState = 5;
+		}
+		else if(strcmp(inputBuffer, "4") == 0)
+		{
+			if (TestMailSystem() == TRUE)
+			{
+				printf("Failed Mail System Test\n");
+			}
+			else
+			{
+				printf("Mail System Test Passed\n");
+			}
 			testState = 5;
 		}
 		else

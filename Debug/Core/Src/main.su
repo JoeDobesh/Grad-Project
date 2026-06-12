@@ -1,7 +1,7 @@
 ../Core/Src/main.c:627:13:MX_GPIO_Init	80	static
 ../Core/Src/main.c:609:13:MX_DMA_Init	16	static
 ../Core/Src/main.c:88:5:__io_putchar	16	static
-../Core/Src/main.c:95:5:__io_getchar	16	static
+../Core/Src/main.c:95:5:__io_getchar	24	static
 ../Core/Src/main.c:103:6:HAL_UART_TxCpltCallback	8	static
 ../Core/Src/main.c:115:6:HAL_UARTEx_RxEventCallback	8	static
 ../Core/Src/main.c:127:6:HAL_TIM_PeriodElapsedCallback	8	static

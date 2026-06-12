@@ -7,6 +7,7 @@
 
 #include "MailBag.h"
 #include "Mutex.h"
+#include "SoftTimers.h"
 
 #define MAX_MAIL_BOXES 16
 #define MAX_MESSAGE_COUNT 16
@@ -109,7 +110,7 @@ uint32_t RegisterMailBox(uint32_t myAddress)
 //*****************************************************************************
 // ReleaseMailBox
 //*****************************************************************************
-BOOL ReleaseMailBox(int addr)
+BOOL ReleaseMailBox(uint32_t addr)
 {
 	if(addr == 0)
 	{
@@ -211,43 +212,145 @@ BOOL RetrieveMessage(MESSAGE *myMessage)
 void MailbagTask(void)
 {
 	uint32_t tempAddress;
+	TIMER_PARAMS mailTimer;
+	uint8_t timerID;
+
+	mailTimer.callbackFunctionPtr = NULL;
+	mailTimer.timerType = ONE_SHOT;
+	mailTimer.countTime_ms = 500;
+	timerID = RegisterTimer(mailTimer);
+
+	if (timerID == 0)
+	{
+		printf("MailbagTask - Failed to create soft timer\n");
+	}
+	else
+	{
+		if (StartTimer(timerID, 500) == FALSE)
+		{
+			printf("MailbagTask - Failed to start soft timer\n");
+		}
+	}
+	while(TRUE)
+	{
+		if (CheckTimer(timerID) == TRUE)
+		{
+			for ( int i = 0; i < MAX_MAIL_BOXES; i++)
+			{
+				MutexSpinLock(MUTEX_MAILBOX);
+				if(mailBoxes[i].txHeadCounter == mailBoxes[i].txTailCounter)
+				{
+					continue;
+				}
+				tempAddress = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].receiver;
+				for ( int j = 0; j < MAX_MAIL_BOXES; j++)
+				{
+					if ( mailBoxes[j].address == tempAddress)
+					{
+						mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr = malloc(mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
+						if(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr == NULL)
+						{
+							return;
+						}
+						memcpy(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
+						mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].receiver = tempAddress;
+						mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].sender = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].sender;
+						mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].size = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size;
+						mailBoxes[j].rxHeadCounter++;
+						mailBoxes[j].rxHeadCounter = (mailBoxes[j].rxHeadCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[j].rxHeadCounter;
+						free (mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr);
+						mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr = NULL;
+						mailBoxes[i].txTailCounter++;
+						mailBoxes[i].txTailCounter = (mailBoxes[i].txTailCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[i].txTailCounter;
+						break;
+					}
+				}
+				MutexRelease(MUTEX_MAILBOX);
+			}
+			if (StartTimer(timerID, 500) == FALSE)
+			{
+				printf("MailbagTask - Failed to start soft timer\n");
+			}
+		}
+	}
+}
+
+//*****************************************************************************
+// TestMailSystem
+//*****************************************************************************
+BOOL TestMailSystem(void)
+{
+	uint8_t testStep = 0;
+	uint32_t sender, receiver;
+	MESSAGE myMessage;
+	char messageStr[] = "The quick brown fox jumped over the lazy dog.\n";
+	BOOL retVal;
+	uint8_t tries;
 
 	while(TRUE)
 	{
-		for ( int i = 0; i < MAX_MAIL_BOXES; i++)
+		switch(testStep)
 		{
+		case 0:
+			printf("Test Mail System - Creating 2 Mail Boxes\n");
+			sender = RegisterMailBox(0xA5A5A5A5);
+			if (sender == 0)
+			{
+				printf("Test Mail System - Failed registering a sender\n");
+				return FALSE;
+			}
+			receiver = RegisterMailBox(0x5A5A5A5A);
+			if (receiver == 0)
+			{
+				printf("Test Mail System - Failed registering a receiver\n");
+				ReleaseMailBox(0xA5A5A5A5);
+				return FALSE;
+			}
+			printf("Test Mail System - Sending a Message\n");
+			myMessage.sender = 0xA5A5A5A5;
+			myMessage.receiver = 0x5A5A5A5A;
+			myMessage.messagePtr = messageStr;
+			myMessage.size = sizeof(messageStr);
 			MutexSpinLock(MUTEX_MAILBOX);
-			if(mailBoxes[i].txHeadCounter == mailBoxes[i].txTailCounter)
-			{
-				continue;
-			}
-			tempAddress = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].receiver;
-			for ( int j = 0; j < MAX_MAIL_BOXES; j++)
-			{
-				if ( mailBoxes[j].address == tempAddress)
-				{
-					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr = malloc(mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
-					if(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr == NULL)
-					{
-						return;
-					}
-					memcpy(mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr, mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size);
-					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].receiver = tempAddress;
-					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].sender = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].sender;
-					mailBoxes[j].inBox[mailBoxes[j].rxHeadCounter].size = mailBoxes[i].outBox[mailBoxes[i].txTailCounter].size;
-					mailBoxes[j].rxHeadCounter++;
-					mailBoxes[j].rxHeadCounter = (mailBoxes[j].rxHeadCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[j].rxHeadCounter;
-					free (mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr);
-					mailBoxes[i].outBox[mailBoxes[i].txTailCounter].messagePtr = NULL;
-					mailBoxes[i].txTailCounter++;
-					mailBoxes[i].txTailCounter = (mailBoxes[i].txTailCounter == MAX_MESSAGE_COUNT)? 0: mailBoxes[i].txTailCounter;
-					break;
-				}
-			}
+			retVal = SendMessage(myMessage);
 			MutexRelease(MUTEX_MAILBOX);
+			if (retVal == FALSE)
+			{
+				printf("Test Mail System - Failed to Send\n");
+				ReleaseMailBox(0xA5A5A5A5);
+				ReleaseMailBox(0x5A5A5A5A);
+				return FALSE;
+			}
+			tries = 100;
+			testStep++;
+			break;
+		case 1:
+			MutexSpinLock(MUTEX_MAILBOX);
+			retVal = RetrieveMessage(&myMessage);
+			MutexRelease(MUTEX_MAILBOX);
+			if (retVal == FALSE)
+			{
+				tries--;
+			}
+			else
+			{
+				printf("Received Message: %s\n", myMessage.messagePtr);
+				ReleaseMailBox(0xA5A5A5A5);
+				ReleaseMailBox(0x5A5A5A5A);
+				return TRUE;
+			}
+			if (tries == 0)
+			{
+				printf("Test Mail System - Failed to Receive Message\n");
+				ReleaseMailBox(0xA5A5A5A5);
+				ReleaseMailBox(0x5A5A5A5A);
+				return FALSE;
+			}
+			break;
+		default:
+			return FALSE;
 		}
 	}
 }
 
 // EOF
-//lines 200

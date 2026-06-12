@@ -35,10 +35,11 @@ typedef struct _MESSAGE
 
 void MailBagInit(void);
 uint32_t RegisterMailBox(uint32_t myAddress);
-BOOL ReleaseMailBox(int addr);
+BOOL ReleaseMailBox(uint32_t addr);
 BOOL SendMessage(MESSAGE myMessage);
 BOOL RetrieveMessage(MESSAGE *myMessage);
 void MailbagTask(void);
+BOOL TestMailSystem(void);
 
 #ifdef __cplusplus
 }

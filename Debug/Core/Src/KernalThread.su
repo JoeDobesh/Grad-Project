@@ -4,7 +4,7 @@
 ../Core/Src/KernalThread.c:78:6:KernelTask	8	static
 ../Core/Src/KernalThread.c:66:13:ServerTask	8	static
 ../Core/Src/KernalThread.c:179:13:LoadProcess	24	static
-../Core/Src/KernalThread.c:240:13:KernalThreadInit	8	static
+../Core/Src/KernalThread.c:238:13:KernalThreadInit	8	static
 ../Core/Src/KernalThread.c:87:6:TimeToContextSwitch	0	static
-../Core/Src/KernalThread.c:215:6:vTaskSwitchContext	8	static
-../Core/Src/KernalThread.c:291:6:KernalTask	8	static,ignoring_inline_asm
+../Core/Src/KernalThread.c:213:6:vTaskSwitchContext	8	static
+../Core/Src/KernalThread.c:289:6:KernalTask	8	static,ignoring_inline_asm

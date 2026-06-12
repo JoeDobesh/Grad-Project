@@ -19,7 +19,7 @@
 ../Core/Src/Modbus.c:563:6:RxReadFifoQueue	0	static
 ../Core/Src/Modbus.c:568:6:RxReadHoldingRegisters	16	static
 ../Core/Src/Modbus.c:589:6:RxWriteSingleRegister	16	static
-../Core/Src/Modbus.c:299:13:ModbusParseResponse	40	static
+../Core/Src/Modbus.c:299:13:ModbusParseResponse	32	static
 ../Core/Src/Modbus.c:253:13:ModbusSend	272	static
 ../Core/Src/Modbus.c:160:6:ModbusInit	40	static
 ../Core/Src/Modbus.c:238:6:ModebusGetMessage	0	static

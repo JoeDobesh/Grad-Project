@@ -48,12 +48,28 @@ BOOL GetMasterBootRecord(void);
 /// <returns>BOOL - If an error is found, FALSE is returned. Otherwise TRUE</returns>
 uint32_t GetFirstSectorLBA(uint8_t);
 
-
+/// <summary>
+/// GetTotalSectors - Reads the Master Boot Record, Checks for errors, and determines the number of partitions.
+/// </summary>
+/// <returns>BOOL - If an error is found, FALSE is returned. Otherwise TRUE</returns>
 uint32_t GetTotalSectors(uint8_t);
 
+/// <summary>
+/// IsBootValid - Reads the Master Boot Record, Checks for errors, and determines the number of partitions.
+/// </summary>
+/// <returns>BOOL - If an error is found, FALSE is returned. Otherwise TRUE</returns>
 BOOL IsBootValid(void);
 
+/// <summary>
+/// PrintBootSector - Reads the Master Boot Record, Checks for errors, and determines the number of partitions.
+/// </summary>
+/// <returns>BOOL - If an error is found, FALSE is returned. Otherwise TRUE</returns>
 BOOL PrintBootSector(void);
+
+/// <summary>
+/// GetPartitionType - Reads the Master Boot Record, Checks for errors, and determines the number of partitions.
+/// </summary>
+/// <returns>BOOL - If an error is found, FALSE is returned. Otherwise TRUE</returns>
 FS_TYPES GetPartitionType(void);
 
 #ifdef __cplusplus
@@ -61,5 +77,3 @@ FS_TYPES GetPartitionType(void);
 #endif
 
 #endif /* INC_DISK_BOOT_H_ */
-
-//Lines 21

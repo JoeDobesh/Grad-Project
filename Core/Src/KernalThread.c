@@ -178,7 +178,6 @@ static volatile uint32_t * InitialiseStack(volatile uint32_t * topOfStack, USER_
 //*****************************************************************************
 static BOOL LoadProcess(void * process,
 						uint32_t * stackPtr,
-						//PCB * pcb,
 						uint32_t stack_size)
 {
 	uint32_t stackSize = stack_size;
@@ -186,7 +185,6 @@ static BOOL LoadProcess(void * process,
 
 	assert(process != NULL);
 	assert(stackPtr != NULL);
-	//assert(pcb != NULL);
 
 	PCB * pcb;
 

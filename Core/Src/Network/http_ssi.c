@@ -169,7 +169,7 @@ uint16_t SsiHandler(int iIndex, char *pcInsert, int iInsertLen)
 	switch (iIndex)
 	{
 	case 0: //speed
-		sprintf(pcInsert, "%d", GetPulseWidth());
+		sprintf(pcInsert, "%lu", GetPulseWidth());
 		return strlen(pcInsert);
 		break;
 	case 1: //crossingImage

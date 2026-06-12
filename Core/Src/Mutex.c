@@ -35,12 +35,14 @@ BOOL MutexLock(RESOURCES resource)
 	{
 		return FALSE;
 	}
+	DisableAllInterrupts();
 	if(myMutexes[resource] == LOCKED)
 	{
+		EnableAllInterrupts();
 		return FALSE;
 	}
 	myMutexes[resource] = LOCKED;
-
+	EnableAllInterrupts();
 	return TRUE;
 }
 
@@ -53,8 +55,7 @@ BOOL MutexSpinLock(RESOURCES resource)
 	{
 		return FALSE;
 	}
-	while(myMutexes[resource] == LOCKED){;}
-	myMutexes[resource] = LOCKED;
+	while(MutexLock(resource) == FALSE){;}
 
 	return TRUE;
 }
@@ -69,14 +70,13 @@ BOOL MutexTimeLock(RESOURCES resource, uint32_t timer_ms)
 		return FALSE;
 	}
 	uint32_t timeout = HAL_GetTick() + timer_ms;
-	while(myMutexes[resource] == LOCKED)
+	while(MutexLock(resource) == FALSE)
 	{
 		if(timeout < HAL_GetTick())
 		{
 			return FALSE;
 		}
 	}
-	myMutexes[resource] = LOCKED;
 
 	return TRUE;
 }
@@ -90,10 +90,11 @@ BOOL MutexRelease(RESOURCES resource)
 	{
 		return FALSE;
 	}
+	DisableAllInterrupts();
 	myMutexes[resource] = UNLOCKED;
+	EnableAllInterrupts();
 
 	return TRUE;
 }
 
 // EOF
-//lines 40

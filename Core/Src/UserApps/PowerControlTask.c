@@ -61,12 +61,12 @@ void PowerControlTask(void)
 			if(ch == '<')
 			{
 				PowerControlDecrament();
-				printf("Pulsewidth: %d\n", pulseWidth);
+				printf("Pulsewidth: %lu\n", pulseWidth);
 			}
 			if(ch == '>')
 			{
 				PowerControlIncrament();
-				printf("Pulsewidth: %d\n", pulseWidth);
+				printf("Pulsewidth: %lu\n", pulseWidth);
 			}
 		}
 	}

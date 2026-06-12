@@ -1,6 +1,6 @@
 ../Middlewares/Third_Party/LwIP/src/core/tcp_out.c:305:1:tcp_write_checks	16	static
 ../Middlewares/Third_Party/LwIP/src/core/tcp_out.c:1432:1:tcp_output_segment_busy	8	static
-../Middlewares/Third_Party/LwIP/src/core/tcp_out.c:1872:1:tcp_output_fill_options	16	static
+../Middlewares/Third_Party/LwIP/src/core/tcp_out.c:1872:1:tcp_output_fill_options	8	static
 ../Middlewares/Third_Party/LwIP/src/core/tcp_out.c:225:1:tcp_pbuf_prealloc	32	static
 ../Middlewares/Third_Party/LwIP/src/core/tcp_out.c:158:1:tcp_create_segment	32	static
 ../Middlewares/Third_Party/LwIP/src/core/tcp_out.c:1818:1:tcp_output_alloc_header_common	24	static

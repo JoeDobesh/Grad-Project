@@ -1,5 +1,5 @@
 ../Core/Src/Mutex.c:19:6:MutexInit	2
-../Core/Src/Mutex.c:32:6:MutexLock	3
-../Core/Src/Mutex.c:50:6:MutexSpinLock	3
-../Core/Src/Mutex.c:65:6:MutexTimeLock	4
-../Core/Src/Mutex.c:87:6:MutexRelease	2
+../Core/Src/Mutex.c:32:6:MutexLock	5
+../Core/Src/Mutex.c:52:6:MutexSpinLock	3
+../Core/Src/Mutex.c:66:6:MutexTimeLock	4
+../Core/Src/Mutex.c:87:6:MutexRelease	3
